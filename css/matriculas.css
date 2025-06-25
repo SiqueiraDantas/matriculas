@@ -1,0 +1,124 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  margin: 0;
+  padding: 2rem;
+  color: #1B4B5F;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+.titulo {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #F26729;
+  margin-bottom: 1.5rem;
+}
+
+form fieldset {
+  border: 2px solid #1B4B5F;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+form legend {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #F26729;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #F26729;
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.6rem;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  background-color: #F26729;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #d9531d;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-group label {
+  background-color: #fff8ec;
+  padding: 0.5rem 0.9rem;
+  border: 2px solid #f26729;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.checkbox-group label:hover {
+  background-color: #ffe5c7;
+}
+
+#notificacao {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #fff;
+  background-color: #1B4B5F;
+  z-index: 10000;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 90%;
+}
+
+/* RODAPÉ COM IMAGEM ÚNICA */
+.rodape {
+  margin-top: 4rem;
+  width: 100%;
+}
+
+.rodape img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}

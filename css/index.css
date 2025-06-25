@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  color: #1B4B5F;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #FAFAFA;
+  border-right: 2px solid #1B4B5F;
+  padding: 1.5rem 1rem;
+}
+
+.logo {
+  width: 100%;
+  max-width: 150px;
+  margin-bottom: 2rem;
+}
+
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+  color: #1B4B5F;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.sidebar nav a.active,
+.sidebar nav a:hover {
+  background-color: #F26729;
+  color: white;
+}
+
+.icon {
+  margin-right: 8px;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  background-color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.titulo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #F26729;
+}
+
+.logout-btn {
+  background-color: #F26729;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #d35413;
+}
+
+.cards {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background-color: #f0f8ff;
+  border-left: 6px solid #1B4B5F;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  min-width: 250px;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.08);
+}
+
+.numero {
+  font-weight: bold;
+  color: #1B4B5F;
+}
+
+.tabela-wrapper {
+  overflow-x: auto;
+}
+
+#tabelaMatrículas {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+#tabelaMatrículas th,
+#tabelaMatrículas td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+#tabelaMatrículas th {
+  background-color: #1B4B5F;
+  color: white;
+}
