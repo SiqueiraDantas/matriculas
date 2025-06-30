@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrícula</title>
+  <link rel="stylesheet" href="css/matriculas.css" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="titulo">📋 Faça aqui sua Matrícula</h1>
+
+    <form id="formMatricula">
+      <!-- DADOS DO ALUNO -->
+      <fieldset>
+        <legend>👦 Aluno</legend>
+
+        <div class="form-group">
+          <label>Nome:</label>
+          <input type="text" name="nome" id="nome" required />
+        </div>
+
+        <div class="form-group">
+          <label>Idade:</label>
+          <input type="number" name="idade" id="idade" required />
+        </div>
+
+        <div class="form-group">
+          <label>CPF:</label>
+          <input type="text" name="cpf" id="cpf" maxlength="14" required />
+        </div>
+
+        <div class="form-group">
+          <label>Telefone:</label>
+          <input type="tel" name="telefone" id="telefone" required />
+        </div>
+
+        <div class="form-group">
+          <label>Oficinas:</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="oficinas[]" value="Flauta Doce" /> Flauta Doce</label>
+            <label><input type="checkbox" name="oficinas[]" value="Clarinete" /> Clarinete</label>
+            <label><input type="checkbox" name="oficinas[]" value="Trompete" /> Trompete</label>
+            <label><input type="checkbox" name="oficinas[]" value="Trombone" /> Trombone</label>
+            <label><input type="checkbox" name="oficinas[]" value="Saxofone" /> Saxofone</label>
+            <label><input type="checkbox" name="oficinas[]" value="Flauta Transversal" /> Flauta Transversal</label>
+            <label><input type="checkbox" name="oficinas[]" value="Trompa" /> Trompa</label>
+            <label><input type="checkbox" name="oficinas[]" value="Percussão/Fanfarra" /> Percussão/Fanfarra</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Sexo:</label>
+          <select name="sexo" id="sexo" required>
+            <option value="">Selecione</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Raça:</label>
+          <select name="raca" id="raca" required>
+            <option value="">Selecione</option>
+            <option value="Branca">Branca</option>
+            <option value="Preta">Preta</option>
+            <option value="Parda">Parda</option>
+            <option value="Amarela">Amarela</option>
+            <option value="Indígena">Indígena</option>
+            <option value="Prefere não declarar">Prefere não declarar</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Religião:</label>
+          <select name="religiao" id="religiao">
+            <option value="">Selecione</option>
+            <option value="Católica">Católica</option>
+            <option value="Evangélica">Evangélica</option>
+            <option value="Espírita">Espírita</option>
+            <option value="Outra">Outra</option>
+          </select>
+        </div>
+
+       <div class="form-group">
+  <label>Escola:</label>
+  <select name="escola" id="escola" required>
+    <option value="" disabled selected>Selecione</option>
+
+    <!-- CEIs -->
+    <option>CEI José Alzir Silva Lima</option>
+    <option>CEI José Hermínio Rodrigues do Nascimento</option>
+    <option>CEI Mãe Toinha</option>
+    <option>CEI Maria da Conceição Barros Pinho</option>
+    <option>CEI Maria de Lourdes Bezerra Costa</option>
+    <option>CEI Maria Mirtes Costa Salgado</option>
+    <option>CEI Sara Rosita Ferreira</option>
+    <option>CEI Terezinha Mariano Germano</option>
+
+    <!-- Escolas de Ensino Fundamental e Médio -->
+    <option>EEF 25 de Maio I</option>
+    <option>EEF Álvaro de Araújo Carneiro</option>
+    <option>EEF Dau Alberto</option>
+    <option>EEF Francisco Correia Lima</option>
+    <option>EEF João Costa</option>
+    <option>EEF José Severo de Pinho</option>
+    <option>EEF Margarida Alves</option>
+    <option>EEF Padre Jaime Felício</option>
+    <option>EEF Paula Queiroz</option>
+    <option>EEF Vicente Patrício de Almeida</option>
+    <option>EEIF Antonio Alves da Silva</option>
+    <option>EEIF Comunidade Pau Ferros</option>
+    <option>EEIF Damião Carneiro</option>
+    <option>EEIF Eliônia Campos</option>
+
+    <!-- Escolas Particulares e Técnicas -->
+    <option>IEST Santa Teresinha Instituto Educacional</option>
+    <option>EEEP Joao Jackson Lobo Guerra</option>
+    <option>EEEP Venceslau Vieira Batista</option>
+    <option>EEM Alfredo Machado</option>
+    <option>IFCE Campus Boa Viagem</option>
+  </select>
+</div>
+
+
+        <div class="form-group">
+          <label>Bairro onde mora:</label>
+          <select name="bairro" id="bairro" required>
+            <option value="" disabled selected>Selecione</option>
+            <optgroup label="Bairros do Distrito-Sede">
+              <option>Centro</option>
+              <option>Santa Teresinha</option>
+              <option>Henrique Jorge</option>
+              <option>São José</option>
+              <option>Boa Vista</option>
+              <option>Alto da Alegria</option>
+              <option>Bairro dos Pinhos</option>
+              <option>Nova Madalena</option>
+              <option>Madalena Velha</option>
+              <option>Santana</option>
+            </optgroup>
+            <optgroup label="Demais Distritos">
+              <option>Sede</option>
+              <option>Macaoca</option>
+              <option>Cajazeiras</option>
+              <option>União</option>
+              <option>Cacimba Nova</option>
+              <option>Paus Branco</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Rede de Ensino:</label>
+          <select name="rede" id="rede" required>
+            <option value="">Selecione</option>
+            <option value="Municipal">Municipal</option>
+            <option value="Estadual">Estadual</option>
+            <option value="Federal">Federal</option>
+            <option value="Particular">Particular</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Matrícula:</label>
+          <select name="tipoMatricula" required>
+            <option value="" disabled selected>Selecione</option>
+            <option value="A">Matrícula</option>
+            <option value="B">Rematrícula</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <!-- DADOS DO RESPONSÁVEL -->
+      <fieldset>
+        <legend>👪 Responsável</legend>
+
+        <div class="form-group">
+          <label>Nome:</label>
+          <input type="text" name="responsavel" id="responsavel" required />
+        </div>
+
+        <div class="form-group">
+          <label>Telefone:</label>
+          <input type="tel" name="telefone" id="telefoneResponsavel" required />
+        </div>
+
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" name="email" id="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Número de Integrantes na Família:</label>
+          <input type="number" name="integrantes" id="integrantes" />
+        </div>
+
+        <div class="form-group">
+          <label>Programas Sociais:</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="programas[]" value="Bolsa Família" /> Bolsa Família</label>
+            <label><input type="checkbox" name="programas[]" value="Pé-de-Meia" /> Pé-de-Meia</label>
+            <label><input type="checkbox" name="programas[]" value="Auxílio Brasil" /> Auxílio Brasil</label>
+            <label><input type="checkbox" name="programas[]" value="Cesta Básica" /> Cesta Básica</label>
+            <label><input type="checkbox" name="programas[]" value="Nenhum" /> Nenhum</label>
+          </div>
+        </div>
+      </fieldset>
+
+      <button type="submit" id="btnEnviar">Enviar Matrícula</button>
+    </form>
+  </div>
+
+  <div id="notificacao" class="notificacao-topo"></div>
+
+  <div class="rodape">
+    <img src="assets/rodape_site.png" alt="Rodapé com logos" />
+  </div>
+
+  <!-- Máscaras e scripts -->
+  <script>
+    // Máscara CPF
+    document.getElementById('cpf').addEventListener('input', function (e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      e.target.value = value;
+    });
+
+    // Máscara Telefone
+    function mascaraTelefone(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+      if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+      if (value.length >= 10) value = value.replace(/(\(\d{2}\)) (\d{5})(\d{0,4})/, '$1 $2-$3');
+      input.value = value;
+    }
+
+    document.getElementById('telefone').addEventListener('input', function () {
+      mascaraTelefone(this);
+    });
+
+    document.getElementById('telefoneResponsavel').addEventListener('input', function () {
+      mascaraTelefone(this);
+    });
+  </script>
+
+  <!-- Firebase + Script de envio -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="js/matriculas.js"></script>
+</body>
+</html>

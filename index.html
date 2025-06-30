@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Início</title>
+  <link rel="stylesheet" href="css/index.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('usuarioLogado') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="container">
+    <aside class="sidebar">
+      <img src="logo.png" alt="Logo" class="logo" />
+      <nav>
+        <a href="index.html" class="active"><span class="icon">🏠</span> Início</a>
+        <a href="dados.html"><span class="icon">🧑‍🏫</span> Dados Pessoais</a>
+        <a href="diario.html"><span class="icon">📚</span> Diário Online</a>
+        <a href="turmas.html"><span class="icon">👥</span> Turmas</a>
+        <a href="matriculas.html"><span class="icon">➕</span> Matrículas</a>
+        <a href="faltas.html"><span class="icon">❗</span> Faltas Críticas</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="header">
+        <h1 class="titulo">📌 Painel Geral</h1>
+        <button class="logout-btn" onclick="logout()">Sair</button>
+      </div>
+
+      <div class="cards">
+        <div class="card" id="totalInscritosCard">
+          👥 Alunos Inscritos: <span class="numero">...</span>
+        </div>
+      </div>
+
+     <!-- Substitua o bloco <div id="tabelaAlunos"> ... </div> por este abaixo -->
+
+<div id="tabelaAlunos" style="display: none; margin-top: 2rem;">
+  <h2 style="margin-bottom: 1rem;">📄 Lista de Matrículas</h2>
+  <div class="tabela-wrapper" style="overflow-x: auto;">
+    <table id="tabelaMatrículas">
+      <thead>
+        <tr>
+          <th>Nº Matrícula</th>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Idade</th>
+          <th>Sexo</th>
+          <th>Raça</th>
+          <th>Religião</th>
+          <th>Escola</th>
+          <th>Rede</th>
+          <th>Tipo</th>
+          <th>Oficinas</th>
+          <th>Programas</th>
+          <th>Responsável</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Família</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+  <script src="js/index.js"></script>
+</body>
+</html>
