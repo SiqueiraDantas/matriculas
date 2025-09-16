@@ -1,0 +1,330 @@
+// js/matriculas.js — formulário público (oficinas dinâmicas + PCD + upload + transação de vagas)
+// Versão "conservadora": sem optional chaining, sem template strings
+
+// ============== Firebase compat ==============
+var firebaseConfig = {
+  apiKey: "AIzaSyAzavu7lRQPAi--SFecOg2FE6f0WlDyTPE",
+  authDomain: "matriculas-madeinsertao.firebaseapp.com",
+  projectId: "matriculas-madeinsertao",
+  storageBucket: "matriculas-madeinsertao.appspot.com",
+  messagingSenderId: "426884127493",
+  appId: "1:426884127493:web:7c83d74f972af209c8b56c",
+  measurementId: "G-V2DH0RHXEE"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var storage = null;
+try { storage = firebase.storage(); } catch (e) { console.warn("Storage não disponível:", e); }
+
+// ============== Helpers UI/Validação ==============
+function notify(msg, isErr) {
+  if (isErr === void 0) isErr = false;
+  var n = document.getElementById("notificacao");
+  if (!n) { alert(msg); return; }
+  n.textContent = msg;
+  n.style.position = "fixed";
+  n.style.top = "20px";
+  n.style.left = "50%";
+  n.style.transform = "translateX(-50%)";
+  n.style.padding = "12px 24px";
+  n.style.borderRadius = "10px";
+  n.style.color = "#fff";
+  n.style.fontWeight = "600";
+  n.style.fontSize = "16px";
+  n.style.background = isErr ? "#c0392b" : "#27ae60";
+  n.style.zIndex = "10000";
+  n.style.boxShadow = "0 4px 12px rgba(0,0,0,.2)";
+  setTimeout(function () {
+    n.textContent = "";
+    n.removeAttribute("style");
+  }, 6000);
+}
+
+function validarCPF(cpf) {
+  if (!cpf) return false;
+  cpf = cpf.replace(/\D/g, "");
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  var s = 0, i, r;
+  for (i = 0; i < 9; i++) s += +cpf[i] * (10 - i);
+  r = (s * 10) % 11; if (r === 10 || r === 11) r = 0; if (r !== +cpf[9]) return false;
+  s = 0; for (i = 0; i < 10; i++) s += +cpf[i] * (11 - i);
+  r = (s * 10) % 11; if (r === 10 || r === 11) r = 0; return r === +cpf[10];
+}
+
+function codEscola(nome) {
+  var c = {
+    "Escola de Ensino Infantil e Fundamental Maria do Carmo": "MC",
+    "Escola de Ensino Médio Alfredo Machado": "AM",
+    "CEI Mãe Toinha": "MT",
+    "CEI Sara Rosita": "SR",
+    "CEI Raio de Luz": "RL",
+    "CEI Pequeno Aprendiz": "PA",
+    "CEI Criança Feliz": "CF",
+    "CEI Luz do Saber": "LS",
+    "CEI Mundo Encantado": "ME",
+    "CEI Sonho de Criança": "SC",
+    "CEI José Edson do Nascimento": "JE",
+    "CEI José Alzir Silva Lima": "JA"
+  };
+  return c[nome] || "EMM";
+}
+
+function sanitizeCPF(cpf) { return (cpf || "").replace(/\D/g, ""); }
+
+function getCheckedRad(name) {
+  var el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : null;
+}
+
+function validatePCDFile(file) {
+  if (!file) return { ok:false, reason:"Nenhum arquivo selecionado." };
+  var types = ["application/pdf","image/jpeg","image/png"];
+  if (types.indexOf(file.type) === -1) return { ok:false, reason:"Tipo inválido. Use PDF/JPG/PNG." };
+  if (file.size > 5 * 1024 * 1024) return { ok:false, reason:"Máximo 5MB." };
+  return { ok:true };
+}
+
+// ============== Oficinas em tempo real (DOM puro) ==============
+var oficinasGroup = document.getElementById("oficinasGroup");
+
+function listenOficinas() {
+  if (!oficinasGroup) {
+    console.warn("oficinasGroup não encontrado.");
+    return;
+  }
+  console.log("[Matriculas] listenOficinas: iniciando…");
+
+  return db.collection("oficinas").orderBy("nome").onSnapshot(function (snap) {
+    console.log("[Matriculas] oficinas snapshot size:", snap.size);
+    oficinasGroup.innerHTML = "";
+
+    if (snap.empty) {
+      oficinasGroup.innerHTML = "<small class='help'>Nenhuma oficina cadastrada ainda.</small>";
+      return;
+    }
+
+    snap.forEach(function (doc) {
+      var ofi = doc.data();
+      var id = doc.id;
+      var cap = Number(ofi && ofi.capacidade || 0);
+      var ins = Number(ofi && ofi.inscritos || 0);
+      var rest = Math.max(0, cap - ins);
+      var lotado = rest <= 0;
+
+      // label.chip
+      var label = document.createElement("label");
+      label.className = "chip" + (lotado ? " chip-disabled" : "");
+      if (lotado) label.title = "Lotado";
+
+      // input checkbox
+      var input = document.createElement("input");
+      input.type = "checkbox";
+      input.name = "oficinas[]";
+      input.value = ofi && ofi.nome ? ofi.nome : "(sem nome)";
+      input.setAttribute("data-id", id);
+      if (lotado) input.disabled = true;
+
+      // texto
+      var texto = (ofi && ofi.nome ? ofi.nome : "(sem nome)") + " " + (lotado ? "(Lotado)" : "(" + rest + " vagas)");
+
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(texto));
+      oficinasGroup.appendChild(label);
+    });
+  }, function (err) {
+    console.error("listenOficinas erro:", err);
+    oficinasGroup.innerHTML = "<small class='help' style='color:#c0392b'>Falha ao carregar oficinas.</small>";
+  });
+}
+
+// ============== PCD Toggle/Upload ==============
+function wirePCDToggle() {
+  var group = document.getElementById("pcdGroup");
+  var wrap  = document.getElementById("pcdUploadWrap");
+  var input = document.getElementById("pcdArquivo");
+  var label = document.getElementById("pcdArquivoNome");
+
+  if (group) {
+    group.addEventListener("change", function () {
+      var val = getCheckedRad("pcd");
+      var show = val === "Sim";
+      if (wrap) {
+        if (show) wrap.classList.remove("hidden");
+        else wrap.classList.add("hidden");
+      }
+      if (!show && input) {
+        input.value = "";
+        if (label) label.textContent = "";
+      }
+    });
+  }
+
+  if (input) {
+    input.addEventListener("change", function () {
+      var f = input.files && input.files[0];
+      if (label) label.textContent = f ? ("Selecionado: " + f.name) : "";
+    });
+  }
+}
+
+// ============== Main submit (com transação de vagas) ==============
+window.addEventListener("DOMContentLoaded", function () {
+  wirePCDToggle();
+  listenOficinas();
+
+  var form = document.getElementById("formMatricula");
+  var btn  = document.getElementById("btnEnviar");
+
+  if (!form) {
+    console.error("Form #formMatricula não encontrado.");
+    return;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
+
+    (async function () {
+      try {
+        var fd = new FormData(form);
+
+        // Aluno
+        var nome   = (fd.get("nome") || "").toString().trim();
+        var cpfRaw = (fd.get("cpf") || "").toString();
+        var cpf    = sanitizeCPF(cpfRaw);
+        var idade  = (fd.get("idade") || "").toString().trim();
+        var sexo   = (fd.get("sexo") || "").toString();
+        var raca   = (fd.get("raca") || "").toString();
+        var religiao = (fd.get("religiao") || "").toString();
+        var escola   = (fd.get("escola") || "").toString();
+        var bairro   = (fd.get("bairro") || "").toString();
+        var rede     = (fd.get("rede") || "").toString();
+        var tipoMatricula = (fd.get("tipoMatricula") || "").toString();
+        var telefoneAluno = (fd.get("telefoneAluno") || fd.get("telefone") || "").toString().trim();
+
+        // Responsável
+        var responsavel = {
+          nome: (fd.get("responsavel") || "").toString().trim(),
+          telefone: (fd.get("telefoneResponsavel") || "").toString().trim(),
+          email: (fd.get("email") || "").toString().trim(),
+          integrantes: (fd.get("integrantes") || "").toString()
+        };
+
+        // Programas
+        var programas = [];
+        var progEls = document.querySelectorAll('input[name="programas[]"]:checked');
+        for (var i = 0; i < progEls.length; i++) programas.push(progEls[i].value);
+
+        // Oficinas escolhidas (id + nome)
+        var escolhidas = [];
+        var ofEls = document.querySelectorAll('input[name="oficinas[]"]:checked');
+        for (var j = 0; j < ofEls.length; j++) {
+          escolhidas.push({ id: ofEls[j].getAttribute("data-id"), nome: ofEls[j].value });
+        }
+        if (escolhidas.length === 0) throw new Error("Selecione pelo menos uma oficina.");
+
+        // PCD
+        var pcd = (getCheckedRad("pcd") || "Não").toString();
+        var pcdInput = document.getElementById("pcdArquivo");
+        var pcdArquivoUrl = null, pcdArquivoNome = null, pcdArquivoPath = null;
+        if (pcd === "Sim") {
+          if (!storage) { notify("❗ Upload PCD indisponível (Storage não carregado).", true); return; }
+          var file = pcdInput && pcdInput.files && pcdInput.files[0];
+          var v = validatePCDFile(file);
+          if (!v.ok) { notify("❗ Arquivo PCD inválido: " + v.reason, true); return; }
+          var path = "pcd_comprovantes/" + (cpf || "semcpf") + "_" + Date.now() + "_" + file.name;
+          var ref = storage.ref(path);
+          await ref.put(file);
+          pcdArquivoUrl = await ref.getDownloadURL();
+          pcdArquivoNome = file.name;
+          pcdArquivoPath = path;
+        }
+
+        // Validações essenciais
+        if (!nome) throw new Error("Informe o nome do aluno.");
+        if (!validarCPF(cpf)) { notify("❗ CPF inválido.", true); return; }
+        if (!escola) throw new Error("Selecione a escola.");
+        if (!tipoMatricula) throw new Error("Selecione Matrícula (A) ou Rematrícula (B).");
+        if (!responsavel.nome || !responsavel.telefone) throw new Error("Informe os dados do responsável.");
+
+        // Duplicidade por CPF
+        var dup = await db.collection("matriculas").where("cpf","==",cpf).get();
+        if (!dup.empty) { notify("❗ CPF já cadastrado.", true); return; }
+
+        // Número de matrícula (dinâmico por ano/escola)
+        var ano = (new Date()).getFullYear();
+        var ce  = codEscola(escola);
+        var seq = await db.collection("matriculas").where("ano","==",ano).where("escola","==",escola).get();
+        var numeroMatricula = ano + "-" + tipoMatricula + "-" + ce + "-" + String(seq.size + 1).padStart(4,"0");
+
+        // Payload base
+        var now = new Date();
+        var alunoRef = db.collection("matriculas").doc(); // id manual p/ transação
+        var payload = {
+          numeroMatricula: numeroMatricula,
+          ano: ano,
+          nome: nome,
+          cpf: cpf,
+          idade: idade,
+          sexo: sexo,
+          raca: raca,
+          religiao: religiao,
+          escola: escola,
+          bairro: bairro,
+          rede: rede,
+          tipoMatricula: tipoMatricula,
+          telefoneAluno: telefoneAluno,
+          oficinas: escolhidas.map(function(o){ return o.nome; }),
+          oficinaIds: escolhidas.map(function(o){ return o.id; }),
+          programas: programas,
+          pcd: pcd,
+          pcdArquivoUrl: pcdArquivoUrl,
+          pcdArquivoNome: pcdArquivoNome,
+          pcdArquivoPath: pcdArquivoPath,
+          responsavel: responsavel,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          dataEnvio: now.toISOString()
+        };
+
+        // ===== Transação: confere e debita vagas =====
+        await db.runTransaction(async function (t) {
+          // 1) ler e validar vagas
+          for (var k = 0; k < escolhidas.length; k++) {
+            var o = escolhidas[k];
+            var refO = db.collection("oficinas").doc(o.id);
+            var snap = await t.get(refO);
+            if (!snap.exists) throw new Error('Oficina "' + o.nome + '" não encontrada.');
+            var dataO = snap.data();
+            var capacidade = Number(dataO && dataO.capacidade || 0);
+            var inscritos  = Number(dataO && dataO.inscritos  || 0);
+            if (inscritos >= capacidade) throw new Error('Oficina "' + o.nome + '" está lotada.');
+          }
+          // 2) debitar
+          for (var m = 0; m < escolhidas.length; m++) {
+            var o2 = escolhidas[m];
+            var refO2 = db.collection("oficinas").doc(o2.id);
+            var snap2 = await t.get(refO2);
+            var inscritos2 = Number((snap2.data() || {}).inscritos || 0);
+            t.update(refO2, { inscritos: inscritos2 + 1 });
+          }
+          // 3) criar matrícula
+          t.set(alunoRef, payload);
+        });
+
+        notify(nome + ", sua matrícula foi efetuada com sucesso!");
+        form.reset();
+        var wrap = document.getElementById("pcdUploadWrap");
+        var nomeEl = document.getElementById("pcdArquivoNome");
+        if (wrap) wrap.classList.add("hidden");
+        if (nomeEl) nomeEl.textContent = "";
+        window.scrollTo(0, 0);
+      } catch (err) {
+        console.error(err);
+        notify("❌ " + (err && err.message ? err.message : "Não foi possível enviar a matrícula."), true);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Enviar Matrícula"; }
+      }
+    })();
+  });
+});
