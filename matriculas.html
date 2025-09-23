@@ -28,6 +28,11 @@
           <div class="form-group sm">
             <label for="idade">Idade *</label>
             <input type="number" name="idade" id="idade" min="1" required />
+            <!-- Mensagem de validação de idade -->
+            <p id="erroIdade" style="display:none; color:#c62828; margin-top:6px;">
+              O aluno não tem idade para a oficina
+            </p>
+            <small class="help">Oficinas disponíveis para 11 a 18 anos.</small>
           </div>
 
           <div class="form-group">
@@ -259,4 +264,3 @@
   <script src="js/matriculas.js"></script>
 </body>
 </html>
-
