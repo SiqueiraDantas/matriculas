@@ -85,6 +85,63 @@ function validatePCDFile(file) {
   return { ok:true };
 }
 
+// ======= NOVO: Padronização de nomes (Aluno/Responsável) =======
+var PARTICULAS_MINUSCULAS = [
+  "da","das","de","do","dos","e","di","du","della","dello","del","der",
+  "van","von","la","le","y"
+];
+
+function removeDiacritics(str) {
+  return (str || "").normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+function capitalizeWord(w) {
+  if (!w) return "";
+  return w.charAt(0).toLocaleUpperCase("pt-BR") + w.slice(1);
+}
+
+function applyWordRules(word, isFirstWord) {
+  var base = (word || "").toLocaleLowerCase("pt-BR");
+  if (!isFirstWord && PARTICULAS_MINUSCULAS.indexOf(removeDiacritics(base)) !== -1) {
+    return base;
+  }
+  // Alguns sufixos comuns (ajuste se quiser outro comportamento)
+  if (base === "jr" || base === "neto" || base === "filho") {
+    return capitalizeWord(base);
+  }
+  return capitalizeWord(base);
+}
+
+function formatToken(token, isFirstWord) {
+  // d'Ávila / d’Almeida
+  var aposMatch = token.match(/^([a-zçãõâêîôûáéíóúàèìòùäëïöüñ]+[’'])(.+)$/i);
+  if (aposMatch) {
+    var partA = aposMatch[1].toLocaleLowerCase("pt-BR");
+    var partB = capitalizeWord(aposMatch[2]);
+    return partA + partB;
+  }
+  // Ana-Clara
+  if (token.indexOf("-") !== -1) {
+    var subs = token.split("-");
+    for (var i = 0; i < subs.length; i++) {
+      subs[i] = applyWordRules(subs[i], isFirstWord && i === 0);
+    }
+    return subs.join("-");
+  }
+  return applyWordRules(token, isFirstWord);
+}
+
+function toTitleCasePtBr(nome) {
+  if (!nome) return "";
+  var clean = nome.replace(/\s+/g, " ").trim();
+  clean = clean.toLocaleLowerCase("pt-BR");
+  var palavras = clean.split(" ");
+  for (var i = 0; i < palavras.length; i++) {
+    palavras[i] = formatToken(palavras[i], i === 0);
+  }
+  return palavras.join(" ");
+}
+
 // ============== Oficinas em tempo real (DOM puro) ==============
 var oficinasGroup = document.getElementById("oficinasGroup");
 
@@ -168,10 +225,53 @@ function wirePCDToggle() {
   }
 }
 
+// ======= NOVO: Validação de idade =======
+function idadeValidaStr(val) {
+  if (val === null || val === undefined) return false;
+  var n = Number(String(val).trim());
+  if (isNaN(n)) return false;
+  return n >= 11 && n <= 18;
+}
+
+function mostrarErroIdade(mostrar) {
+  var el = document.getElementById("erroIdade");
+  if (!el) return;
+  el.style.display = mostrar ? "block" : "none";
+}
+
 // ============== Main submit (com transação de vagas) ==============
 window.addEventListener("DOMContentLoaded", function () {
   wirePCDToggle();
   listenOficinas();
+
+  // NOVO: padronização de nomes ao sair do campo
+  var inputNome = document.getElementById("nome");
+  var inputResponsavel = document.getElementById("responsavel");
+  if (inputNome) {
+    inputNome.addEventListener("blur", function () {
+      inputNome.value = toTitleCasePtBr(inputNome.value);
+    });
+  }
+  if (inputResponsavel) {
+    inputResponsavel.addEventListener("blur", function () {
+      inputResponsavel.value = toTitleCasePtBr(inputResponsavel.value);
+    });
+  }
+
+  // NOVO: feedback de idade inválida enquanto digita
+  var inputIdade = document.getElementById("idade");
+  if (inputIdade) {
+    inputIdade.addEventListener("input", function () {
+      var ok = idadeValidaStr(inputIdade.value);
+      var temValor = String(inputIdade.value || "").trim() !== "";
+      mostrarErroIdade(!ok && temValor);
+    });
+    inputIdade.addEventListener("blur", function () {
+      var ok = idadeValidaStr(inputIdade.value);
+      var temValor = String(inputIdade.value || "").trim() !== "";
+      mostrarErroIdade(!ok && temValor);
+    });
+  }
 
   var form = document.getElementById("formMatricula");
   var btn  = document.getElementById("btnEnviar");
@@ -183,6 +283,19 @@ window.addEventListener("DOMContentLoaded", function () {
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+
+    // NOVO: valida idade (bloqueia envio se fora da faixa)
+    var idadeEl = document.getElementById("idade");
+    var idadeOk = idadeEl ? idadeValidaStr(idadeEl.value) : false;
+    if (!idadeOk) {
+      mostrarErroIdade(true);
+      if (idadeEl) idadeEl.focus();
+      notify("❗ O aluno não tem idade para a oficina.", true);
+      return;
+    } else {
+      mostrarErroIdade(false);
+    }
+
     if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
 
     (async function () {
@@ -203,6 +316,9 @@ window.addEventListener("DOMContentLoaded", function () {
         var tipoMatricula = (fd.get("tipoMatricula") || "").toString();
         var telefoneAluno = (fd.get("telefoneAluno") || fd.get("telefone") || "").toString().trim();
 
+        // NOVO: padroniza nomes antes de salvar
+        if (nome) nome = toTitleCasePtBr(nome);
+
         // Responsável
         var responsavel = {
           nome: (fd.get("responsavel") || "").toString().trim(),
@@ -210,6 +326,7 @@ window.addEventListener("DOMContentLoaded", function () {
           email: (fd.get("email") || "").toString().trim(),
           integrantes: (fd.get("integrantes") || "").toString()
         };
+        if (responsavel.nome) responsavel.nome = toTitleCasePtBr(responsavel.nome);
 
         // Programas
         var programas = [];
@@ -222,7 +339,7 @@ window.addEventListener("DOMContentLoaded", function () {
         for (var j = 0; j < ofEls.length; j++) {
           escolhidas.push({ id: ofEls[j].getAttribute("data-id"), nome: ofEls[j].value });
         }
-        if (escolhidas.length === 0) throw new Error("Selecione pelo menos uma oficina.");
+        if (escolhidas.length === 0) { notify("❗ Selecione pelo menos uma oficina.", true); throw new Error("Selecione pelo menos uma oficina."); }
 
         // PCD
         var pcd = (getCheckedRad("pcd") || "Não").toString();
