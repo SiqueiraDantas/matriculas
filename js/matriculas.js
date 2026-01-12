@@ -164,15 +164,10 @@ function listenOficinas() {
     snap.forEach(function (doc) {
       var ofi = doc.data();
       var id = doc.id;
-      var cap = Number(ofi && ofi.capacidade || 0);
-      var ins = Number(ofi && ofi.inscritos || 0);
-      var rest = Math.max(0, cap - ins);
-      var lotado = rest <= 0;
 
       // label.chip
       var label = document.createElement("label");
-      label.className = "chip" + (lotado ? " chip-disabled" : "");
-      if (lotado) label.title = "Lotado";
+      label.className = "chip";
 
       // input checkbox
       var input = document.createElement("input");
@@ -180,10 +175,9 @@ function listenOficinas() {
       input.name = "oficinas[]";
       input.value = ofi && ofi.nome ? ofi.nome : "(sem nome)";
       input.setAttribute("data-id", id);
-      if (lotado) input.disabled = true;
 
-      // texto
-      var texto = (ofi && ofi.nome ? ofi.nome : "(sem nome)") + " " + (lotado ? "(Lotado)" : "(" + rest + " vagas)");
+      // texto (SEM vagas / SEM lotação)
+      var texto = (ofi && ofi.nome ? ofi.nome : "(sem nome)");
 
       label.appendChild(input);
       label.appendChild(document.createTextNode(texto));
@@ -230,7 +224,8 @@ function idadeValidaStr(val) {
   if (val === null || val === undefined) return false;
   var n = Number(String(val).trim());
   if (isNaN(n)) return false;
-  return n >= 11 && n <= 18;
+  // ALTERADO: 8 a 18
+  return n >= 8 && n <= 18;
 }
 
 function mostrarErroIdade(mostrar) {
@@ -239,7 +234,7 @@ function mostrarErroIdade(mostrar) {
   el.style.display = mostrar ? "block" : "none";
 }
 
-// ============== Main submit (com transação de vagas) ==============
+// ============== Main submit (SEM transação de vagas) ==============
 window.addEventListener("DOMContentLoaded", function () {
   wirePCDToggle();
   listenOficinas();
@@ -290,7 +285,7 @@ window.addEventListener("DOMContentLoaded", function () {
     if (!idadeOk) {
       mostrarErroIdade(true);
       if (idadeEl) idadeEl.focus();
-      notify("❗ O aluno não tem idade para a oficina.", true);
+      notify("❗ A idade deve estar entre 8 e 18 anos.", true);
       return;
     } else {
       mostrarErroIdade(false);
@@ -377,7 +372,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         // Payload base
         var now = new Date();
-        var alunoRef = db.collection("matriculas").doc(); // id manual p/ transação
+        var alunoRef = db.collection("matriculas").doc(); // id manual
         var payload = {
           numeroMatricula: numeroMatricula,
           ano: ano,
@@ -404,30 +399,8 @@ window.addEventListener("DOMContentLoaded", function () {
           dataEnvio: now.toISOString()
         };
 
-        // ===== Transação: confere e debita vagas =====
-        await db.runTransaction(async function (t) {
-          // 1) ler e validar vagas
-          for (var k = 0; k < escolhidas.length; k++) {
-            var o = escolhidas[k];
-            var refO = db.collection("oficinas").doc(o.id);
-            var snap = await t.get(refO);
-            if (!snap.exists) throw new Error('Oficina "' + o.nome + '" não encontrada.');
-            var dataO = snap.data();
-            var capacidade = Number(dataO && dataO.capacidade || 0);
-            var inscritos  = Number(dataO && dataO.inscritos  || 0);
-            if (inscritos >= capacidade) throw new Error('Oficina "' + o.nome + '" está lotada.');
-          }
-          // 2) debitar
-          for (var m = 0; m < escolhidas.length; m++) {
-            var o2 = escolhidas[m];
-            var refO2 = db.collection("oficinas").doc(o2.id);
-            var snap2 = await t.get(refO2);
-            var inscritos2 = Number((snap2.data() || {}).inscritos || 0);
-            t.update(refO2, { inscritos: inscritos2 + 1 });
-          }
-          // 3) criar matrícula
-          t.set(alunoRef, payload);
-        });
+        // ALTERADO: sem transação de vagas / sem debitar inscritos
+        await alunoRef.set(payload);
 
         notify(nome + ", sua matrícula foi efetuada com sucesso!");
         form.reset();
