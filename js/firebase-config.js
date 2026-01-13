@@ -1,25 +1,27 @@
-// js/firebase-config.js
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// js/firebase-config.js (NOVO BANCO - matriculas-cfdd0)
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-// Se for usar Storage para fotos/anexos, descomente:
-// import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAzavu7lRQPAi--SFecOg2FE6f0WlDyTPE",
-  authDomain: "matriculas-madeinsertao.firebaseapp.com",
-  projectId: "matriculas-madeinsertao",
-  storageBucket: "matriculas-madeinsertao.appspot.com",
-  messagingSenderId: "426884127493",
-  appId: "1:426884127493:web:7c83d74f972af209c8b56c"
+  apiKey: "AIzaSyB79TFuSXVbYprURdw5Q5jI9xxc6DkDOMQ",
+  authDomain: "matriculas-cfdd0.firebaseapp.com",
+  projectId: "matriculas-cfdd0",
+  storageBucket: "matriculas-cfdd0.firebasestorage.app",
+  messagingSenderId: "697940252168",
+  appId: "1:697940252168:web:0822cc5e1e94b083dde3bd",
+  measurementId: "G-ZBPXGL357R",
 };
 
-// Evita reinicializar o app se já estiver iniciado
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// Inicializa
+const app = initializeApp(firebaseConfig);
 
-// Serviços do Firebase
-const auth = getAuth(app);
-const db = getFirestore(app);
-// const storage = getStorage(app);
+// Exporta para uso no index.js / login.js / etc
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
-export { app, auth, db /*, storage*/ };
+// Debug (pra garantir que tá no banco certo)
+console.log("[FIREBASE OK] projectId =", firebaseConfig.projectId);
