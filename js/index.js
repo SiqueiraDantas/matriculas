@@ -15,8 +15,6 @@ import {
   doc,
   getDoc,
   deleteDoc,
-  runTransaction,
-  where,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* -------------------- ELEMENTOS DA UI -------------------- */
@@ -107,10 +105,10 @@ async function carregarTabelaMatriculas() {
           <td>${d.tipoMatricula === "A" ? "Matrícula" : (d.tipoMatricula === "B" ? "Rematrícula" : "-")}</td>
           <td>${Array.isArray(d.oficinas) ? d.oficinas.join(", ") : "-"}</td>
           <td>${Array.isArray(d.programas) ? d.programas.join(", ") : "-"}</td>
-          <td>${safe(d?.responsavel?.nome)}</td>
-          <td>${safe(d?.responsavel?.telefone)}</td>
-          <td>${safe(d?.responsavel?.email)}</td>
-          <td>${safe(d?.responsavel?.integrantes)}</td>
+          <td>${safe(d && d.responsavel ? d.responsavel.nome : null)}</td>
+          <td>${safe(d && d.responsavel ? d.responsavel.telefone : null)}</td>
+          <td>${safe(d && d.responsavel ? d.responsavel.email : null)}</td>
+          <td>${safe(d && d.responsavel ? d.responsavel.integrantes : null)}</td>
           <td class="td-actions">
             <button class="btn xs btn-edit" data-action="edit" data-id="${docu.id}">Editar</button>
             <button class="btn xs danger btn-delete" data-action="delete" data-id="${docu.id}">Excluir</button>
@@ -139,24 +137,6 @@ tabelaBody?.addEventListener("click", async (ev) => {
 
   const action = btn.getAttribute("data-action");
 
-  // Índices de colunas (1-based) compatíveis com o thead atual:
-  // 1 Nº Matrícula
-  // 2 Nome
-  // 3 CPF
-  // 4 Idade
-  // 5 Sexo
-  // 6 Raça
-  // 7 Religião
-  // 8 Escola
-  // 9 Rede
-  // 10 Tipo
-  // 11 Oficinas (CSV)
-  // 12 Programas (CSV)
-  // 13 Resp. Nome
-  // 14 Resp. Telefone
-  // 15 Resp. E-mail
-  // 16 Integrantes
-  // 17 Ações
   const EDIT_COL_START = 2;
   const EDIT_COL_END   = 16;
 
@@ -284,37 +264,14 @@ tabelaBody?.addEventListener("click", async (ev) => {
         return;
       }
       const d = snap.data();
-      const nome = d?.nome || "-";
+      const nome = (d && d.nome) ? d.nome : "-";
 
-      if (!confirm(`Excluir a matrícula de "${nome}"?\nEsta ação removerá a matrícula e devolverá as vagas nas oficinas selecionadas.`)) {
+      if (!confirm(`Excluir a matrícula de "${nome}"?\nEsta ação removerá o registro definitivamente.`)) {
         return;
       }
 
-      // Monta refs das oficinas a partir de IDs (preferencial)
-      let oficinaRefs = [];
-      if (Array.isArray(d?.oficinaIds) && d.oficinaIds.length) {
-        oficinaRefs = d.oficinaIds.map((oid) => doc(db, "oficinas", oid));
-      } else if (Array.isArray(d?.oficinas) && d.oficinas.length) {
-        // fallback: procurar por nome
-        for (const nomeOf of d.oficinas) {
-          const qs = await getDocs(query(collection(db, "oficinas"), where("nome", "==", nomeOf)));
-          qs.forEach((ofiDoc) => oficinaRefs.push(doc(db, "oficinas", ofiDoc.id)));
-        }
-      }
+      await deleteDoc(matRef);
 
-      // Transação: decrementa inscritos (sem ficar negativo) e apaga matrícula
-      await runTransaction(db, async (t) => {
-        for (const ref of oficinaRefs) {
-          const s = await t.get(ref);
-          if (s.exists()) {
-            const atual = Number(s.data().inscritos || 0);
-            t.update(ref, { inscritos: Math.max(0, atual - 1) });
-          }
-        }
-        t.delete(matRef);
-      });
-
-      // Remove a linha e atualiza KPI
       tr.remove();
       await atualizarKpiTotal();
       alert("Matrícula excluída com sucesso.");
@@ -327,12 +284,10 @@ tabelaBody?.addEventListener("click", async (ev) => {
 
 /* -------------------- WIRING GERAL DA INTERFACE -------------------- */
 function wireUI() {
-  // Menu (mobile)
   menuToggle?.addEventListener("click", () => {
     document.body.classList.toggle("sidebar-open");
   });
 
-  // Fecha sidebar ao clicar fora (mobile)
   document.addEventListener("click", (e) => {
     if (!sidebar) return;
     const clickedInsideSidebar = sidebar.contains(e.target);
@@ -342,7 +297,6 @@ function wireUI() {
     }
   });
 
-  // Logout
   btnLogout?.addEventListener("click", async () => {
     try {
       await signOut(auth);
@@ -352,7 +306,6 @@ function wireUI() {
     }
   });
 
-  // Mostrar/Ocultar tabela (botão)
   if (btnMostrarTabela && secTabela) {
     btnMostrarTabela.addEventListener("click", async () => {
       const isHidden = secTabela.classList.contains("hidden");
@@ -365,7 +318,6 @@ function wireUI() {
     });
   }
 
-  // Mostrar/Ocultar tabela (card KPI)
   if (kpiCard && secTabela) {
     kpiCard.addEventListener("click", async () => {
       const isHidden = secTabela.classList.contains("hidden");
@@ -378,7 +330,6 @@ function wireUI() {
     });
   }
 
-  // Filtro por nome
   filtroInput?.addEventListener("input", () => {
     const q = filtroInput.value.toLowerCase();
     const rows = document.querySelectorAll("#tabelaMatriculas tbody tr");
