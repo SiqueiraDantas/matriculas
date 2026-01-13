@@ -6,15 +6,17 @@ var firebaseConfig = {
   apiKey: "AIzaSyB79TFuSXVbYprURdw5Q5jI9xxc6DkDOMQ",
   authDomain: "matriculas-cfdd0.firebaseapp.com",
   projectId: "matriculas-cfdd0",
-  // IMPORTANTE (compat): use o bucket padrão .appspot.com
-  storageBucket: "matriculas-cfdd0.appspot.com",
+  storageBucket: "matriculas-cfdd0.appspot.com", // compat
   messagingSenderId: "697940252168",
   appId: "1:697940252168:web:0822cc5e1e94b083dde3bd",
   measurementId: "G-ZBPXGL357R"
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore();
+
+var db = null;
+try { db = firebase.firestore(); } catch (e) { console.warn("Firestore não disponível:", e); }
+
 var storage = null;
 try { storage = firebase.storage(); } catch (e) { console.warn("Storage não disponível:", e); }
 
@@ -39,7 +41,30 @@ function notify(msg, isErr) {
   setTimeout(function () {
     n.textContent = "";
     n.removeAttribute("style");
-  }, 6000);
+  }, 7000);
+}
+
+function humanFirestoreError(err) {
+  var msg = (err && err.message) ? err.message : "Erro desconhecido.";
+  var code = (err && err.code) ? String(err.code) : "";
+
+  // Permissões (regras)
+  if (code.indexOf("permission-denied") !== -1 || msg.indexOf("Missing or insufficient permissions") !== -1) {
+    return "Permissão negada no Firestore. Ajuste as regras do Firestore para permitir o envio do formulário público.";
+  }
+
+  // Índice composto
+  if (code.indexOf("failed-precondition") !== -1 || msg.indexOf("requires an index") !== -1) {
+    return "Faltando índice no Firestore para essa consulta (ano + escola). Abra o link que aparece no console/erro e crie o índice automaticamente.";
+  }
+
+  // Firestore não criado/ativado
+  if (msg.indexOf("The Cloud Firestore API is not available") !== -1 ||
+      msg.indexOf("Cloud Firestore has not been used") !== -1) {
+    return "O Firestore não está ativado no projeto. Vá no Firebase Console e crie/ative o Firestore Database.";
+  }
+
+  return msg;
 }
 
 function validarCPF(cpf) {
@@ -93,8 +118,6 @@ var PARTICULAS_MINUSCULAS = [
 ];
 
 function removeDiacritics(str) {
-  // atenção: \p{Diacritic} funciona em navegadores modernos; se algum navegador antigo falhar,
-  // dá pra trocar por um regex mais simples. Mantive como estava no seu código.
   return (str || "").normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
@@ -190,9 +213,6 @@ function mostrarErroIdade(mostrar) {
 window.addEventListener("DOMContentLoaded", function () {
   wirePCDToggle();
 
-  // ✅ IMPORTANTE: NÃO chamamos listenOficinas()
-  // Porque as oficinas agora ficam FIXAS no HTML e esse listener apagaria tudo.
-
   // Padronização de nomes
   var inputNome = document.getElementById("nome");
   var inputResponsavel = document.getElementById("responsavel");
@@ -207,7 +227,7 @@ window.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Feedback de idade inválida enquanto digita
+  // Feedback de idade inválida
   var inputIdade = document.getElementById("idade");
   if (inputIdade) {
     inputIdade.addEventListener("input", function () {
@@ -232,6 +252,12 @@ window.addEventListener("DOMContentLoaded", function () {
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+
+    // Checagens básicas de SDK
+    if (!db) {
+      notify("❗ Firestore não carregou. Verifique se firebase-firestore.js está incluído no HTML.", true);
+      return;
+    }
 
     // Valida idade
     var idadeEl = document.getElementById("idade");
@@ -281,16 +307,14 @@ window.addEventListener("DOMContentLoaded", function () {
         var progEls = document.querySelectorAll('input[name="programas[]"]:checked');
         for (var i = 0; i < progEls.length; i++) programas.push(progEls[i].value);
 
-        // Oficinas escolhidas (FIXAS no HTML)
+        // Oficinas fixas no HTML
         var escolhidas = [];
         var ofEls = document.querySelectorAll('input[name="oficinas[]"]:checked');
-        for (var j = 0; j < ofEls.length; j++) {
-          // aqui não tem data-id (porque é fixo no HTML)
-          escolhidas.push({ id: null, nome: ofEls[j].value });
-        }
+        for (var j = 0; j < ofEls.length; j++) escolhidas.push({ id: null, nome: ofEls[j].value });
+
         if (escolhidas.length === 0) {
           notify("❗ Selecione pelo menos uma oficina.", true);
-          throw new Error("Selecione pelo menos uma oficina.");
+          return;
         }
 
         // PCD
@@ -299,12 +323,14 @@ window.addEventListener("DOMContentLoaded", function () {
         var pcdArquivoUrl = null, pcdArquivoNome = null, pcdArquivoPath = null;
 
         if (pcd === "Sim") {
-          if (!storage) { notify("❗ Upload PCD indisponível (Storage não carregado).", true); return; }
+          if (!storage) { notify("❗ Upload PCD indisponível (Storage não carregou no HTML).", true); return; }
           var file = pcdInput && pcdInput.files && pcdInput.files[0];
           var v = validatePCDFile(file);
           if (!v.ok) { notify("❗ Arquivo PCD inválido: " + v.reason, true); return; }
 
-          var path = "pcd_comprovantes/" + (cpf || "semcpf") + "_" + Date.now() + "_" + file.name;
+          var safeName = String(file.name || "arquivo").replace(/[^\w.\-]+/g, "_");
+          var path = "pcd_comprovantes/" + (cpf || "semcpf") + "_" + Date.now() + "_" + safeName;
+
           var ref = storage.ref(path);
           await ref.put(file);
           pcdArquivoUrl = await ref.getDownloadURL();
@@ -313,30 +339,35 @@ window.addEventListener("DOMContentLoaded", function () {
         }
 
         // Validações essenciais
-        if (!nome) throw new Error("Informe o nome do aluno.");
+        if (!nome) { notify("❗ Informe o nome do aluno.", true); return; }
         if (!validarCPF(cpf)) { notify("❗ CPF inválido.", true); return; }
-        if (!escola) throw new Error("Selecione a escola.");
-        if (!tipoMatricula) throw new Error("Selecione Matrícula (A) ou Rematrícula (B).");
-        if (!responsavel.nome || !responsavel.telefone) throw new Error("Informe os dados do responsável.");
+        if (!escola) { notify("❗ Selecione a escola.", true); return; }
+        if (!tipoMatricula) { notify("❗ Selecione Matrícula (A) ou Rematrícula (B).", true); return; }
+        if (!responsavel.nome || !responsavel.telefone) { notify("❗ Informe os dados do responsável.", true); return; }
+
+        // Coleção
+        var COL = "matriculas";
 
         // Duplicidade por CPF
-        var dup = await db.collection("matriculas").where("cpf","==",cpf).get();
+        var dup = await db.collection(COL).where("cpf","==",cpf).get();
         if (!dup.empty) { notify("❗ CPF já cadastrado.", true); return; }
 
         // Número de matrícula (dinâmico por ano/escola)
         var ano = (new Date()).getFullYear();
         var ce  = codEscola(escola);
 
-        var seq = await db.collection("matriculas")
+        // OBS: isso pode exigir ÍNDICE COMPOSTO (ano + escola). Se exigir, o erro trará um link.
+        var seqSnap = await db.collection(COL)
           .where("ano","==",ano)
           .where("escola","==",escola)
           .get();
 
-        var numeroMatricula = ano + "-" + tipoMatricula + "-" + ce + "-" + String(seq.size + 1).padStart(4,"0");
+        var numeroMatricula = ano + "-" + tipoMatricula + "-" + ce + "-" + String(seqSnap.size + 1).padStart(4,"0");
 
         // Payload
         var now = new Date();
-        var alunoRef = db.collection("matriculas").doc();
+        var alunoRef = db.collection(COL).doc();
+
         var payload = {
           numeroMatricula: numeroMatricula,
           ano: ano,
@@ -352,7 +383,6 @@ window.addEventListener("DOMContentLoaded", function () {
           tipoMatricula: tipoMatricula,
           telefoneAluno: telefoneAluno,
           oficinas: escolhidas.map(function(o){ return o.nome; }),
-          // oficinaIds: removido (não há ids no HTML fixo)
           programas: programas,
           pcd: pcd,
           pcdArquivoUrl: pcdArquivoUrl,
@@ -376,7 +406,7 @@ window.addEventListener("DOMContentLoaded", function () {
         window.scrollTo(0, 0);
       } catch (err) {
         console.error(err);
-        notify("❌ " + (err && err.message ? err.message : "Não foi possível enviar a matrícula."), true);
+        notify("❌ " + humanFirestoreError(err), true);
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = "Enviar Matrícula"; }
       }
