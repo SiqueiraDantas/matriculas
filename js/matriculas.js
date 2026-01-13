@@ -1,4 +1,4 @@
-// js/matriculas.js — formulário público (oficinas dinâmicas + PCD + upload)
+// js/matriculas.js — formulário público (OFICINAS FIXAS no HTML + PCD + upload)
 // Versão "conservadora": sem optional chaining, sem template strings
 
 // ============== Firebase compat ==============
@@ -93,6 +93,8 @@ var PARTICULAS_MINUSCULAS = [
 ];
 
 function removeDiacritics(str) {
+  // atenção: \p{Diacritic} funciona em navegadores modernos; se algum navegador antigo falhar,
+  // dá pra trocar por um regex mais simples. Mantive como estava no seu código.
   return (str || "").normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
@@ -140,50 +142,6 @@ function toTitleCasePtBr(nome) {
   return palavras.join(" ");
 }
 
-// ============== Oficinas em tempo real (SEM vagas/lotação) ==============
-var oficinasGroup = document.getElementById("oficinasGroup");
-
-function listenOficinas() {
-  if (!oficinasGroup) {
-    console.warn("oficinasGroup não encontrado.");
-    return;
-  }
-  console.log("[Matriculas] listenOficinas: iniciando…");
-
-  return db.collection("oficinas").orderBy("nome").onSnapshot(function (snap) {
-    console.log("[Matriculas] oficinas snapshot size:", snap.size);
-    oficinasGroup.innerHTML = "";
-
-    if (snap.empty) {
-      oficinasGroup.innerHTML = "<small class='help'>Nenhuma oficina cadastrada ainda.</small>";
-      return;
-    }
-
-    snap.forEach(function (doc) {
-      var ofi = doc.data();
-      var id = doc.id;
-
-      var label = document.createElement("label");
-      label.className = "chip";
-
-      var input = document.createElement("input");
-      input.type = "checkbox";
-      input.name = "oficinas[]";
-      input.value = ofi && ofi.nome ? ofi.nome : "(sem nome)";
-      input.setAttribute("data-id", id);
-
-      var texto = (ofi && ofi.nome ? ofi.nome : "(sem nome)");
-
-      label.appendChild(input);
-      label.appendChild(document.createTextNode(texto));
-      oficinasGroup.appendChild(label);
-    });
-  }, function (err) {
-    console.error("listenOficinas erro:", err);
-    oficinasGroup.innerHTML = "<small class='help' style='color:#c0392b'>Falha ao carregar oficinas.</small>";
-  });
-}
-
 // ============== PCD Toggle/Upload ==============
 function wirePCDToggle() {
   var group = document.getElementById("pcdGroup");
@@ -228,11 +186,14 @@ function mostrarErroIdade(mostrar) {
   el.style.display = mostrar ? "block" : "none";
 }
 
-// ============== Main submit (SEM transação de vagas) ==============
+// ============== Main submit ==============
 window.addEventListener("DOMContentLoaded", function () {
   wirePCDToggle();
-  listenOficinas();
 
+  // ✅ IMPORTANTE: NÃO chamamos listenOficinas()
+  // Porque as oficinas agora ficam FIXAS no HTML e esse listener apagaria tudo.
+
+  // Padronização de nomes
   var inputNome = document.getElementById("nome");
   var inputResponsavel = document.getElementById("responsavel");
   if (inputNome) {
@@ -246,6 +207,7 @@ window.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Feedback de idade inválida enquanto digita
   var inputIdade = document.getElementById("idade");
   if (inputIdade) {
     inputIdade.addEventListener("input", function () {
@@ -271,6 +233,7 @@ window.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
+    // Valida idade
     var idadeEl = document.getElementById("idade");
     var idadeOk = idadeEl ? idadeValidaStr(idadeEl.value) : false;
     if (!idadeOk) {
@@ -288,6 +251,7 @@ window.addEventListener("DOMContentLoaded", function () {
       try {
         var fd = new FormData(form);
 
+        // Aluno
         var nome   = (fd.get("nome") || "").toString().trim();
         var cpfRaw = (fd.get("cpf") || "").toString();
         var cpf    = sanitizeCPF(cpfRaw);
@@ -303,6 +267,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
         if (nome) nome = toTitleCasePtBr(nome);
 
+        // Responsável
         var responsavel = {
           nome: (fd.get("responsavel") || "").toString().trim(),
           telefone: (fd.get("telefoneResponsavel") || "").toString().trim(),
@@ -311,25 +276,34 @@ window.addEventListener("DOMContentLoaded", function () {
         };
         if (responsavel.nome) responsavel.nome = toTitleCasePtBr(responsavel.nome);
 
+        // Programas
         var programas = [];
         var progEls = document.querySelectorAll('input[name="programas[]"]:checked');
         for (var i = 0; i < progEls.length; i++) programas.push(progEls[i].value);
 
+        // Oficinas escolhidas (FIXAS no HTML)
         var escolhidas = [];
         var ofEls = document.querySelectorAll('input[name="oficinas[]"]:checked');
         for (var j = 0; j < ofEls.length; j++) {
-          escolhidas.push({ id: ofEls[j].getAttribute("data-id"), nome: ofEls[j].value });
+          // aqui não tem data-id (porque é fixo no HTML)
+          escolhidas.push({ id: null, nome: ofEls[j].value });
         }
-        if (escolhidas.length === 0) { notify("❗ Selecione pelo menos uma oficina.", true); throw new Error("Selecione pelo menos uma oficina."); }
+        if (escolhidas.length === 0) {
+          notify("❗ Selecione pelo menos uma oficina.", true);
+          throw new Error("Selecione pelo menos uma oficina.");
+        }
 
+        // PCD
         var pcd = (getCheckedRad("pcd") || "Não").toString();
         var pcdInput = document.getElementById("pcdArquivo");
         var pcdArquivoUrl = null, pcdArquivoNome = null, pcdArquivoPath = null;
+
         if (pcd === "Sim") {
           if (!storage) { notify("❗ Upload PCD indisponível (Storage não carregado).", true); return; }
           var file = pcdInput && pcdInput.files && pcdInput.files[0];
           var v = validatePCDFile(file);
           if (!v.ok) { notify("❗ Arquivo PCD inválido: " + v.reason, true); return; }
+
           var path = "pcd_comprovantes/" + (cpf || "semcpf") + "_" + Date.now() + "_" + file.name;
           var ref = storage.ref(path);
           await ref.put(file);
@@ -338,20 +312,29 @@ window.addEventListener("DOMContentLoaded", function () {
           pcdArquivoPath = path;
         }
 
+        // Validações essenciais
         if (!nome) throw new Error("Informe o nome do aluno.");
         if (!validarCPF(cpf)) { notify("❗ CPF inválido.", true); return; }
         if (!escola) throw new Error("Selecione a escola.");
         if (!tipoMatricula) throw new Error("Selecione Matrícula (A) ou Rematrícula (B).");
         if (!responsavel.nome || !responsavel.telefone) throw new Error("Informe os dados do responsável.");
 
+        // Duplicidade por CPF
         var dup = await db.collection("matriculas").where("cpf","==",cpf).get();
         if (!dup.empty) { notify("❗ CPF já cadastrado.", true); return; }
 
+        // Número de matrícula (dinâmico por ano/escola)
         var ano = (new Date()).getFullYear();
         var ce  = codEscola(escola);
-        var seq = await db.collection("matriculas").where("ano","==",ano).where("escola","==",escola).get();
+
+        var seq = await db.collection("matriculas")
+          .where("ano","==",ano)
+          .where("escola","==",escola)
+          .get();
+
         var numeroMatricula = ano + "-" + tipoMatricula + "-" + ce + "-" + String(seq.size + 1).padStart(4,"0");
 
+        // Payload
         var now = new Date();
         var alunoRef = db.collection("matriculas").doc();
         var payload = {
@@ -369,7 +352,7 @@ window.addEventListener("DOMContentLoaded", function () {
           tipoMatricula: tipoMatricula,
           telefoneAluno: telefoneAluno,
           oficinas: escolhidas.map(function(o){ return o.nome; }),
-          oficinaIds: escolhidas.map(function(o){ return o.id; }),
+          // oficinaIds: removido (não há ids no HTML fixo)
           programas: programas,
           pcd: pcd,
           pcdArquivoUrl: pcdArquivoUrl,
@@ -384,10 +367,12 @@ window.addEventListener("DOMContentLoaded", function () {
 
         notify(nome + ", sua matrícula foi efetuada com sucesso!");
         form.reset();
+
         var wrap = document.getElementById("pcdUploadWrap");
         var nomeEl = document.getElementById("pcdArquivoNome");
         if (wrap) wrap.classList.add("hidden");
         if (nomeEl) nomeEl.textContent = "";
+
         window.scrollTo(0, 0);
       } catch (err) {
         console.error(err);
