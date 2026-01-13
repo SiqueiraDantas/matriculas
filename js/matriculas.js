@@ -1,15 +1,16 @@
-// js/matriculas.js — formulário público (oficinas dinâmicas + PCD + upload + transação de vagas)
+// js/matriculas.js — formulário público (oficinas dinâmicas + PCD + upload)
 // Versão "conservadora": sem optional chaining, sem template strings
 
 // ============== Firebase compat ==============
 var firebaseConfig = {
-  apiKey: "AIzaSyAzavu7lRQPAi--SFecOg2FE6f0WlDyTPE",
-  authDomain: "matriculas-madeinsertao.firebaseapp.com",
-  projectId: "matriculas-madeinsertao",
-  storageBucket: "matriculas-madeinsertao.appspot.com",
-  messagingSenderId: "426884127493",
-  appId: "1:426884127493:web:7c83d74f972af209c8b56c",
-  measurementId: "G-V2DH0RHXEE"
+  apiKey: "AIzaSyB79TFuSXVbYprURdw5Q5jI9xxc6DkDOMQ",
+  authDomain: "matriculas-cfdd0.firebaseapp.com",
+  projectId: "matriculas-cfdd0",
+  // IMPORTANTE (compat): use o bucket padrão .appspot.com
+  storageBucket: "matriculas-cfdd0.appspot.com",
+  messagingSenderId: "697940252168",
+  appId: "1:697940252168:web:0822cc5e1e94b083dde3bd",
+  measurementId: "G-ZBPXGL357R"
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -85,7 +86,7 @@ function validatePCDFile(file) {
   return { ok:true };
 }
 
-// ======= NOVO: Padronização de nomes (Aluno/Responsável) =======
+// ======= Padronização de nomes (Aluno/Responsável) =======
 var PARTICULAS_MINUSCULAS = [
   "da","das","de","do","dos","e","di","du","della","dello","del","der",
   "van","von","la","le","y"
@@ -105,7 +106,6 @@ function applyWordRules(word, isFirstWord) {
   if (!isFirstWord && PARTICULAS_MINUSCULAS.indexOf(removeDiacritics(base)) !== -1) {
     return base;
   }
-  // Alguns sufixos comuns (ajuste se quiser outro comportamento)
   if (base === "jr" || base === "neto" || base === "filho") {
     return capitalizeWord(base);
   }
@@ -113,14 +113,12 @@ function applyWordRules(word, isFirstWord) {
 }
 
 function formatToken(token, isFirstWord) {
-  // d'Ávila / d’Almeida
   var aposMatch = token.match(/^([a-zçãõâêîôûáéíóúàèìòùäëïöüñ]+[’'])(.+)$/i);
   if (aposMatch) {
     var partA = aposMatch[1].toLocaleLowerCase("pt-BR");
     var partB = capitalizeWord(aposMatch[2]);
     return partA + partB;
   }
-  // Ana-Clara
   if (token.indexOf("-") !== -1) {
     var subs = token.split("-");
     for (var i = 0; i < subs.length; i++) {
@@ -142,7 +140,7 @@ function toTitleCasePtBr(nome) {
   return palavras.join(" ");
 }
 
-// ============== Oficinas em tempo real (DOM puro) ==============
+// ============== Oficinas em tempo real (SEM vagas/lotação) ==============
 var oficinasGroup = document.getElementById("oficinasGroup");
 
 function listenOficinas() {
@@ -165,18 +163,15 @@ function listenOficinas() {
       var ofi = doc.data();
       var id = doc.id;
 
-      // label.chip
       var label = document.createElement("label");
       label.className = "chip";
 
-      // input checkbox
       var input = document.createElement("input");
       input.type = "checkbox";
       input.name = "oficinas[]";
       input.value = ofi && ofi.nome ? ofi.nome : "(sem nome)";
       input.setAttribute("data-id", id);
 
-      // texto (SEM vagas / SEM lotação)
       var texto = (ofi && ofi.nome ? ofi.nome : "(sem nome)");
 
       label.appendChild(input);
@@ -219,12 +214,11 @@ function wirePCDToggle() {
   }
 }
 
-// ======= NOVO: Validação de idade =======
+// ======= Validação de idade (8 a 18) =======
 function idadeValidaStr(val) {
   if (val === null || val === undefined) return false;
   var n = Number(String(val).trim());
   if (isNaN(n)) return false;
-  // ALTERADO: 8 a 18
   return n >= 8 && n <= 18;
 }
 
@@ -239,7 +233,6 @@ window.addEventListener("DOMContentLoaded", function () {
   wirePCDToggle();
   listenOficinas();
 
-  // NOVO: padronização de nomes ao sair do campo
   var inputNome = document.getElementById("nome");
   var inputResponsavel = document.getElementById("responsavel");
   if (inputNome) {
@@ -253,7 +246,6 @@ window.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // NOVO: feedback de idade inválida enquanto digita
   var inputIdade = document.getElementById("idade");
   if (inputIdade) {
     inputIdade.addEventListener("input", function () {
@@ -279,7 +271,6 @@ window.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    // NOVO: valida idade (bloqueia envio se fora da faixa)
     var idadeEl = document.getElementById("idade");
     var idadeOk = idadeEl ? idadeValidaStr(idadeEl.value) : false;
     if (!idadeOk) {
@@ -297,7 +288,6 @@ window.addEventListener("DOMContentLoaded", function () {
       try {
         var fd = new FormData(form);
 
-        // Aluno
         var nome   = (fd.get("nome") || "").toString().trim();
         var cpfRaw = (fd.get("cpf") || "").toString();
         var cpf    = sanitizeCPF(cpfRaw);
@@ -311,10 +301,8 @@ window.addEventListener("DOMContentLoaded", function () {
         var tipoMatricula = (fd.get("tipoMatricula") || "").toString();
         var telefoneAluno = (fd.get("telefoneAluno") || fd.get("telefone") || "").toString().trim();
 
-        // NOVO: padroniza nomes antes de salvar
         if (nome) nome = toTitleCasePtBr(nome);
 
-        // Responsável
         var responsavel = {
           nome: (fd.get("responsavel") || "").toString().trim(),
           telefone: (fd.get("telefoneResponsavel") || "").toString().trim(),
@@ -323,12 +311,10 @@ window.addEventListener("DOMContentLoaded", function () {
         };
         if (responsavel.nome) responsavel.nome = toTitleCasePtBr(responsavel.nome);
 
-        // Programas
         var programas = [];
         var progEls = document.querySelectorAll('input[name="programas[]"]:checked');
         for (var i = 0; i < progEls.length; i++) programas.push(progEls[i].value);
 
-        // Oficinas escolhidas (id + nome)
         var escolhidas = [];
         var ofEls = document.querySelectorAll('input[name="oficinas[]"]:checked');
         for (var j = 0; j < ofEls.length; j++) {
@@ -336,7 +322,6 @@ window.addEventListener("DOMContentLoaded", function () {
         }
         if (escolhidas.length === 0) { notify("❗ Selecione pelo menos uma oficina.", true); throw new Error("Selecione pelo menos uma oficina."); }
 
-        // PCD
         var pcd = (getCheckedRad("pcd") || "Não").toString();
         var pcdInput = document.getElementById("pcdArquivo");
         var pcdArquivoUrl = null, pcdArquivoNome = null, pcdArquivoPath = null;
@@ -353,26 +338,22 @@ window.addEventListener("DOMContentLoaded", function () {
           pcdArquivoPath = path;
         }
 
-        // Validações essenciais
         if (!nome) throw new Error("Informe o nome do aluno.");
         if (!validarCPF(cpf)) { notify("❗ CPF inválido.", true); return; }
         if (!escola) throw new Error("Selecione a escola.");
         if (!tipoMatricula) throw new Error("Selecione Matrícula (A) ou Rematrícula (B).");
         if (!responsavel.nome || !responsavel.telefone) throw new Error("Informe os dados do responsável.");
 
-        // Duplicidade por CPF
         var dup = await db.collection("matriculas").where("cpf","==",cpf).get();
         if (!dup.empty) { notify("❗ CPF já cadastrado.", true); return; }
 
-        // Número de matrícula (dinâmico por ano/escola)
         var ano = (new Date()).getFullYear();
         var ce  = codEscola(escola);
         var seq = await db.collection("matriculas").where("ano","==",ano).where("escola","==",escola).get();
         var numeroMatricula = ano + "-" + tipoMatricula + "-" + ce + "-" + String(seq.size + 1).padStart(4,"0");
 
-        // Payload base
         var now = new Date();
-        var alunoRef = db.collection("matriculas").doc(); // id manual
+        var alunoRef = db.collection("matriculas").doc();
         var payload = {
           numeroMatricula: numeroMatricula,
           ano: ano,
@@ -399,7 +380,6 @@ window.addEventListener("DOMContentLoaded", function () {
           dataEnvio: now.toISOString()
         };
 
-        // ALTERADO: sem transação de vagas / sem debitar inscritos
         await alunoRef.set(payload);
 
         notify(nome + ", sua matrícula foi efetuada com sucesso!");
