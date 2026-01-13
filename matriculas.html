@@ -28,7 +28,6 @@
           <div class="form-group sm">
             <label for="idade">Idade *</label>
             <input type="number" name="idade" id="idade" min="8" max="18" required />
-            <!-- Mensagem de validação de idade -->
             <p id="erroIdade" style="display:none; color:#c62828; margin-top:6px;">
               A idade deve estar entre 8 e 18 anos.
             </p>
@@ -45,12 +44,30 @@
             <input type="tel" name="telefone" id="telefone" required />
           </div>
 
-          <!-- OFICINAS DINÂMICAS -->
+          <!-- OFICINAS (FIXAS NO HTML) -->
           <div class="form-group">
             <label>Oficinas *</label>
+
+            <!--
+              ✅ Oficinas fixas para já aparecerem mesmo sem Firestore.
+              Se quiser voltar a carregar do Firestore, apague os labels abaixo
+              e deixe esse bloco vazio (como estava antes).
+            -->
             <div class="checkbox-group" id="oficinasGroup">
-              <!-- preenchido pelo JS a partir da coleção "oficinas" -->
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Flauta Doce">Flauta Doce</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Clarinete">Clarinete</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trompete">Trompete</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trombone">Trombone</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Saxofone">Saxofone</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trompa">Trompa</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Euphônio">Euphônio</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Tuba">Tuba</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Percussão">Percussão</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Prática de Conjunto">Prática de Conjunto</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Teoria Musical">Teoria Musical</label>
             </div>
+
+            <small class="help">Selecione uma ou mais oficinas.</small>
           </div>
 
           <div class="form-group sm">
@@ -92,7 +109,6 @@
             <select name="escola" id="escola" required>
               <option value="" disabled selected>Selecione</option>
 
-              <!-- CEIs -->
               <option>CEI José Alzir Silva Lima</option>
               <option>CEI José Hermínio Rodrigues do Nascimento</option>
               <option>CEI Mãe Toinha</option>
@@ -102,7 +118,6 @@
               <option>CEI Sara Rosita Ferreira</option>
               <option>CEI Terezinha Mariano Germano</option>
 
-              <!-- Escolas de Ensino Fundamental e Médio -->
               <option>EEF 25 de Maio I</option>
               <option>EEF Álvaro de Araújo Carneiro</option>
               <option>EEF Dau Alberto</option>
@@ -118,7 +133,6 @@
               <option>EEIF Damião Carneiro</option>
               <option>EEIF Eliônia Campos</option>
 
-              <!-- Escolas Particulares e Técnicas -->
               <option>IEST Santa Teresinha Instituto Educacional</option>
               <option>EEEP Joao Jackson Lobo Guerra</option>
               <option>EEEP Venceslau Vieira Batista</option>
@@ -224,7 +238,6 @@
     </form>
   </div>
 
-  <!-- sem hidden para o toast aparecer -->
   <div id="notificacao" class="notificacao-topo"></div>
 
   <div class="rodape">
