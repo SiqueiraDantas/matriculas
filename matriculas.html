@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrícula</title>
+  <link rel="stylesheet" href="css/matriculas.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <h1 class="titulo">📋 Faça sua Matrícula</h1>
+      <p class="subtitulo">Preencha seus dados com atenção. Campos com * são obrigatórios.</p>
+    </header>
+
+    <form id="formMatricula" class="card" novalidate>
+      <!-- DADOS DO ALUNO -->
+      <fieldset>
+        <legend><span>👦 Aluno</span></legend>
+
+        <div class="grid">
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" name="nome" id="nome" required />
+          </div>
+
+          <div class="form-group sm">
+            <label for="idade">Idade *</label>
+            <input type="number" name="idade" id="idade" min="8" max="18" required />
+            <p id="erroIdade" style="display:none; color:#c62828; margin-top:6px;">
+              A idade deve estar entre 8 e 18 anos.
+            </p>
+            <small class="help">Idade permitida: 8 a 18 anos.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="cpf">CPF *</label>
+            <input type="text" name="cpf" id="cpf" maxlength="14" required />
+          </div>
+
+          <div class="form-group">
+            <label for="telefone">Telefone *</label>
+            <input type="tel" name="telefone" id="telefone" required />
+          </div>
+
+          <!-- OFICINAS (FIXAS NO HTML) -->
+          <div class="form-group">
+            <label>Oficinas *</label>
+
+            <!--
+              ✅ Oficinas fixas para já aparecerem mesmo sem Firestore.
+              Se quiser voltar a carregar do Firestore, apague os labels abaixo
+              e deixe esse bloco vazio (como estava antes).
+            -->
+            <div class="checkbox-group" id="oficinasGroup">
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Flauta Doce">Flauta Doce</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Clarinete">Clarinete</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trompete">Trompete</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trombone">Trombone</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Saxofone">Saxofone</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Trompa">Trompa</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Euphônio">Euphônio</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Tuba">Tuba</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Percussão">Percussão</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Bateria">Bateria</label>
+              <label class="chip"><input type="checkbox" name="oficinas[]" value="Flauta Transversal">Flauta Transversal</label>
+            </div>
+
+            <small class="help">Selecione uma ou mais oficinas.</small>
+          </div>
+
+          <div class="form-group sm">
+            <label for="sexo">Sexo *</label>
+            <select name="sexo" id="sexo" required>
+              <option value="">Selecione</option>
+              <option>Masculino</option>
+              <option>Feminino</option>
+              <option>Outro</option>
+            </select>
+          </div>
+
+          <div class="form-group sm">
+            <label for="raca">Raça *</label>
+            <select name="raca" id="raca" required>
+              <option value="">Selecione</option>
+              <option>Branca</option>
+              <option>Preta</option>
+              <option>Parda</option>
+              <option>Amarela</option>
+              <option>Indígena</option>
+              <option>Prefere não declarar</option>
+            </select>
+          </div>
+
+          <div class="form-group sm">
+            <label for="religiao">Religião</label>
+            <select name="religiao" id="religiao">
+              <option value="">Selecione</option>
+              <option>Católica</option>
+              <option>Evangélica</option>
+              <option>Espírita</option>
+              <option>Outra</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="escola">Escola *</label>
+            <select name="escola" id="escola" required>
+              <option value="" disabled selected>Selecione</option>
+
+              <option>CEI José Alzir Silva Lima</option>
+              <option>CEI José Hermínio Rodrigues do Nascimento</option>
+              <option>CEI Mãe Toinha</option>
+              <option>CEI Maria da Conceição Barros Pinho</option>
+              <option>CEI Maria de Lourdes Bezerra Costa</option>
+              <option>CEI Maria Mirtes Costa Salgado</option>
+              <option>CEI Sara Rosita Ferreira</option>
+              <option>CEI Terezinha Mariano Germano</option>
+
+              <option>EEF 25 de Maio I</option>
+              <option>EEF Álvaro de Araújo Carneiro</option>
+              <option>EEF Dau Alberto</option>
+              <option>EEF Francisco Correia Lima</option>
+              <option>EEF João Costa</option>
+              <option>EEF José Severo de Pinho</option>
+              <option>EEF Margarida Alves</option>
+              <option>EEF Padre Jaime Felício</option>
+              <option>EEF Paula Queiroz</option>
+              <option>EEF Vicente Patrício de Almeida</option>
+              <option>EEIF Antonio Alves da Silva</option>
+              <option>EEIF Comunidade Pau Ferros</option>
+              <option>EEIF Damião Carneiro</option>
+              <option>EEIF Eliônia Campos</option>
+
+              <option>IEST Santa Teresinha Instituto Educacional</option>
+              <option>EEEP Joao Jackson Lobo Guerra</option>
+              <option>EEEP Venceslau Vieira Batista</option>
+              <option>EEM Alfredo Machado</option>
+              <option>IFCE Campus Boa Viagem</option>
+            </select>
+          </div>
+
+          <div class="form-group sm">
+            <label for="bairro">Bairro onde mora *</label>
+            <select name="bairro" id="bairro" required>
+              <option value="" disabled selected>Selecione</option>
+              <optgroup label="Bairros do Distrito-Sede">
+                <option>Centro</option><option>Santa Teresinha</option><option>Henrique Jorge</option>
+                <option>São José</option><option>Boa Vista</option><option>Alto da Alegria</option>
+                <option>Bairro dos Pinhos</option><option>Nova Madalena</option><option>Madalena Velha</option>
+                <option>Santana</option>
+              </optgroup>
+              <optgroup label="Demais Distritos">
+                <option>Sede</option><option>Macaoca</option><option>Cajazeiras</option>
+                <option>União</option><option>Cacimba Nova</option><option>Paus Branco</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-group sm">
+            <label for="rede">Rede de Ensino *</label>
+            <select name="rede" id="rede" required>
+              <option value="">Selecione</option>
+              <option>Municipal</option>
+              <option>Estadual</option>
+              <option>Federal</option>
+              <option>Particular</option>
+            </select>
+          </div>
+
+          <div class="form-group sm">
+            <label for="tipoMatricula">Tipo de Matrícula *</label>
+            <select name="tipoMatricula" id="tipoMatricula" required>
+              <option value="" disabled selected>Selecione</option>
+              <option value="A">Matrícula</option>
+              <option value="B">Rematrícula</option>
+            </select>
+          </div>
+
+          <!-- PCD -->
+          <div class="form-group sm">
+            <label>PCD (Pessoa com Deficiência)? *</label>
+            <div class="radio-group" id="pcdGroup">
+              <label class="chip"><input type="radio" name="pcd" value="Não" checked> Não</label>
+              <label class="chip"><input type="radio" name="pcd" value="Sim"> Sim</label>
+            </div>
+          </div>
+
+          <div class="form-group pcd-upload hidden" id="pcdUploadWrap">
+            <label for="pcdArquivo">Comprovante PCD (PDF/JPG/PNG, até 5MB)</label>
+            <input type="file" id="pcdArquivo" accept=".pdf,.jpg,.jpeg,.png" />
+            <small class="help">Anexe o laudo/comprovante. Obrigatório se marcou “Sim”.</small>
+            <div id="pcdArquivoNome" class="file-name"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- DADOS DO RESPONSÁVEL -->
+      <fieldset>
+        <legend><span>👪 Responsável</span></legend>
+        <div class="grid">
+          <div class="form-group">
+            <label for="responsavel">Nome *</label>
+            <input type="text" name="responsavel" id="responsavel" required />
+          </div>
+
+          <div class="form-group">
+            <label for="telefoneResponsavel">Telefone *</label>
+            <input type="tel" name="telefoneResponsavel" id="telefoneResponsavel" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" />
+          </div>
+
+          <div class="form-group sm">
+            <label for="integrantes">Nº de Integrantes na Família</label>
+            <input type="number" name="integrantes" id="integrantes" min="1" />
+          </div>
+
+          <div class="form-group">
+            <label>Programas Sociais</label>
+            <div class="checkbox-group">
+              <label class="chip"><input type="checkbox" name="programas[]" value="Bolsa Família" />Bolsa Família</label>
+              <label class="chip"><input type="checkbox" name="programas[]" value="Pé-de-Meia" />Pé-de-Meia</label>
+              <label class="chip"><input type="checkbox" name="programas[]" value="Cesta Básica" />Cesta Básica</label>
+              <label class="chip"><input type="checkbox" name="programas[]" value="Nenhum" />Nenhum</label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" id="btnEnviar" class="btn primary">Enviar Matrícula</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="notificacao" class="notificacao-topo"></div>
+
+  <div class="rodape">
+    <img src="assets/rodape_site.png" alt="Rodapé com logos" />
+  </div>
+
+  <!-- Máscaras -->
+  <script>
+    document.addEventListener('input', function (e) {
+      if (e.target && e.target.id === 'cpf') {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = value;
+      }
+    });
+
+    function mascaraTelefone(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+      if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+      if (value.length >= 10) value = value.replace(/(\(\d{2}\)) (\d{5})(\d{0,4})/, '$1 $2-$3');
+      input.value = value;
+    }
+
+    document.addEventListener('input', function (e) {
+      if (e.target && (e.target.id === 'telefone' || e.target.id === 'telefoneResponsavel')) {
+        mascaraTelefone(e.target);
+      }
+    });
+  </script>
+
+  <!-- Firebase compat (ordem importa) + Storage + seu JS -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="js/matriculas.js"></script>
+</body>
+</html>
+
+

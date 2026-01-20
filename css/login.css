@@ -1,0 +1,142 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.login-container {
+  border: 2px solid #1B4B5F;
+  border-radius: 15px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  background-color: #fdfdfd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.titulo-login {
+  color: #F26729;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  color: #F26729;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.form-group input {
+  padding: 0.7rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #ccc;
+}
+
+button {
+  background-color: #F26729;
+  color: white;
+  padding: 0.8rem;
+  border: none;
+  width: 100%;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #d7551f;
+}
+
+.erro-login {
+  color: red;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+/* ==========================
+   Seletor de Ano (compacto)
+   ========================== */
+
+.ano-box{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.ano-titulo{
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.ano-botoes{
+  display: flex;
+  gap: 8px;
+}
+
+.btn-ano{
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 103, 41, 0.35);
+  background: #fff;
+  color: #F26729;
+  cursor: pointer;
+  transition: 0.2s ease;
+  line-height: 1;
+  min-width: 72px;
+  text-align: center;
+}
+
+.btn-ano:hover{
+  transform: translateY(-1px);
+  border-color: rgba(242, 103, 41, 0.6);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.btn-ano:active{
+  transform: translateY(0px);
+}
+
+.btn-ano.ativo{
+  background: #F26729;
+  color: #fff;
+  border-color: #F26729;
+  box-shadow: 0 6px 14px rgba(242, 103, 41, 0.25);
+}
+
+.ano-info{
+  display: none; /* some com o texto "Ano selecionado" pra ficar clean */
+}
+
+/* Responsivo (mobile): quebra em 2 linhas */
+@media (max-width: 520px){
+  .ano-box{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ano-botoes{
+    width: 100%;
+  }
+  .btn-ano{
+    flex: 1;
+    min-width: 0;
+  }
+}

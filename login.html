@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <h1 class="titulo-login">🔐 Acesso Restrito</h1>
+
+<div class="ano-box">
+  <span class="ano-titulo">Selecione o ano:</span>
+
+  <div class="ano-botoes">
+    <button type="button" id="btnAno2025" class="btn-ano">2025</button>
+    <button type="button" id="btnAno2026" class="btn-ano">2026</button>
+  </div>
+
+  <small class="ano-info" id="anoInfo"></small>
+</div>
+
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" autocomplete="username" required />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" autocomplete="current-password" required />
+      </div>
+
+      <button id="btnEntrar" type="submit">Entrar</button>
+      <p class="erro-login" id="erro"></p>
+    </form>
+  </div>
+
+  <!-- Importa apenas aqui -->
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

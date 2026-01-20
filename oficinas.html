@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MIS Educa — Oficinas</title>
+
+  <!-- Visual -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/index.css" />
+  <link rel="stylesheet" href="css/oficinas.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="logo.png" alt="Logo" class="logo" />
+        <span class="brand-name">MIS Educa</span>
+      </div>
+      <nav class="nav">
+        <a href="index.html" class="nav-link"><span class="icon">🏠</span><span>Início</span></a>
+        <a href="matriculas.html" class="nav-link"><span class="icon">➕</span><span>Matrículas</span></a>
+        <a href="oficinas.html" class="nav-link active"><span class="icon">🎼</span><span>Oficinas</span></a>
+      </nav>
+      <div class="sidebar-footer"><small>© Made In Sertão</small></div>
+    </aside>
+
+    <!-- Conteúdo -->
+    <main class="content">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+        <h1 class="page-title">🎼 Oficinas</h1>
+        <button class="btn-logout" id="btnLogout">Sair</button>
+      </header>
+
+      <section class="cards">
+        <article class="card">
+          <h2 style="margin:0 0 10px 0;">Cadastrar / Editar Oficina</h2>
+          <form id="formOficina" class="of-form" novalidate>
+            <input type="hidden" id="oficinaId" />
+            <div class="row">
+              <label for="nomeOficina">Nome da oficina *</label>
+              <input type="text" id="nomeOficina" placeholder="Ex.: Flauta Transversal" required />
+            </div>
+            <div class="row sm">
+              <label for="capacidade">Capacidade (vagas) *</label>
+              <input type="number" id="capacidade" min="1" step="1" required />
+            </div>
+            <div class="actions">
+              <button type="submit" class="btn primary" id="btnSalvar">Salvar</button>
+              <button type="button" class="btn neutral" id="btnCancelar" style="display:none;">Cancelar</button>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <section class="sheet">
+        <div class="sheet-head">
+          <h2>📋 Lista de Oficinas</h2>
+        </div>
+        <div class="table-scroll">
+          <table id="tabelaOficinas">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Capacidade</th>
+                <th>Inscritos</th>
+                <th>Vagas</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Firebase (compat) — ORDEM IMPORTA -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- JS da página (compat, sem type="module") -->
+  <script src="js/oficinas.js"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+:root{
+  --brand-orange:#F26729;
+  --brand-blue:#1B4B5F;
+  --line:#E6EEF2;
+  --text:#1B1B1B;
+  --muted:#6B7280;
+  --radius:14px;
+  --shadow:0 10px 18px rgba(27,75,95,.08);
+}
+
+*{box-sizing:border-box}
+body{
+  font-family:'Poppins', sans-serif;
+  background:#fff;
+  margin:0;
+  padding:0;
+  color:var(--brand-blue);
+}
+
+.container{
+  max-width:960px;
+  margin:0 auto;
+  padding:24px 18px 48px;
+}
+
+.hero{
+  text-align:center;
+  margin-bottom:18px;
+}
+.titulo{
+  font-size:2rem;
+  font-weight:800;
+  color:var(--brand-orange);
+  margin:0 0 6px 0;
+}
+.subtitulo{
+  margin:0;
+  color:var(--muted);
+  font-weight:600;
+}
+
+/* Card do formulário */
+.card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+
+/* Fieldset */
+form fieldset{
+  border:2px solid var(--brand-blue);
+  border-radius:12px;
+  padding:16px;
+  margin:18px 0;
+}
+form legend{
+  font-weight:800;
+  font-size:1.05rem;
+  color:var(--brand-orange);
+  padding:0 6px;
+}
+
+/* Grid dos campos */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:14px;
+}
+.form-group{ grid-column: span 12; display:flex; flex-direction:column; }
+.form-group.sm{ grid-column: span 6; }
+
+.form-group label{
+  font-weight:800;
+  margin-bottom:6px;
+  color:var(--brand-orange);
+  font-size:.95rem;
+}
+.form-group input,
+.form-group select{
+  padding:10px 12px;
+  border:1.5px solid #d1d5db;
+  border-radius:10px;
+  font-size:1rem;
+  outline:none;
+}
+.form-group input:focus,
+.form-group select:focus{
+  border-color: var(--brand-blue);
+  box-shadow:0 0 0 3px rgba(27,75,95,.12);
+}
+
+/* Chips (checkbox/radio) */
+.checkbox-group, .radio-group{
+  display:flex; flex-wrap:wrap; gap:10px;
+}
+.chip{
+  background:#fff;
+  border:2px solid var(--brand-orange);
+  color:#1f2937;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:.95rem;
+  cursor:pointer;
+  display:inline-flex; align-items:center; gap:8px;
+  transition:.16s ease;
+}
+.chip input{ accent-color: var(--brand-orange) }
+.chip:hover{ background:#fff4eb }
+
+/* PCD Upload */
+.pcd-upload.hidden{ display:none; }
+.help{ color:var(--muted); font-size:.85rem; margin-top:4px }
+.file-name{ margin-top:6px; font-size:.9rem; color:#1f2937 }
+
+/* Ações */
+.actions{ display:flex; justify-content:center; margin-top:8px }
+.btn{
+  background:var(--brand-orange);
+  border:none; color:#fff;
+  padding:12px 18px; border-radius:12px;
+  font-weight:800; cursor:pointer;
+  box-shadow:var(--shadow);
+}
+.btn:hover{ filter:brightness(.95) }
+
+/* Notificação topo */
+#notificacao.notificacao-topo{
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  background-color: var(--brand-blue);
+  z-index: 10000;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  max-width: 92%;
+}
+
+/* Rodapé */
+.rodape{ margin:28px auto 40px; width:100%; max-width:1080px }
+.rodape img{ width:100%; height:auto; display:block; object-fit:cover }
+
+/* Responsivo */
+@media (max-width: 720px){
+  .form-group.sm{ grid-column: span 12; }
+}
+/* ===== FIX: garantir que as oficinas apareçam ===== */
+#oficinasGroup {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  margin-top: 10px !important;
+}
+
+#oficinasGroup .chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid #1B4B5F !important;
+  background: #fff !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+#oficinasGroup .chip input[type="checkbox"] {
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: #F26729 !important;
+}
+

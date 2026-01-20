@@ -1,0 +1,11 @@
+.of-form{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px }
+.of-form .row{ grid-column: span 12; display:flex; flex-direction:column }
+.of-form .row.sm{ grid-column: span 6 }
+.of-form label{ font-weight:800; color:#F26729; margin-bottom:6px }
+.of-form input{
+  padding:10px 12px; border:1.5px solid #d1d5db; border-radius:10px; outline:none;
+}
+.of-form input:focus{ border-color:#1B4B5F; box-shadow:0 0 0 3px rgba(27,75,95,.12) }
+.of-form .actions{ grid-column: span 12; display:flex; gap:10px; justify-content:flex-end }
+#tabelaOficinas td, #tabelaOficinas th{ padding:10px 12px }
+.td-actions{ display:flex; gap:8px; justify-content:center }

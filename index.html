@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MIS Educa — Início</title>
+
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="logo.png" alt="Logo" class="logo" />
+        <span class="brand-name">MIS Educa</span>
+      </div>
+
+      <nav class="nav">
+        <a href="index.html" class="nav-link active"><span class="icon">🏠</span><span>Início</span></a>
+        <a href="matriculas.html" class="nav-link"><span class="icon">➕</span><span>Matrículas</span></a>
+        <a href="oficinas.html" class="nav-link"><span class="icon">🎼</span><span>Oficinas</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <small>© Made In Sertão</small>
+      </div>
+    </aside>
+
+    <!-- Conteúdo -->
+    <main class="content">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+        <h1 class="page-title">📌 Painel Geral</h1>
+        <button class="btn-logout" id="btnLogout">Sair</button>
+      </header>
+
+      <section class="cards">
+        <article class="card kpi">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-body">
+            <p class="kpi-title">Alunos Inscritos</p>
+            <p class="kpi-number" id="kpiInscritos">...</p>
+          </div>
+        </article>
+      </section>
+
+      <section id="tabelaAlunos" class="sheet hidden">
+        <div class="sheet-head">
+          <h2>📄 Lista de Matrículas</h2>
+          <div class="sheet-actions">
+            <input type="search" id="filtroTabela" placeholder="Buscar por nome..." />
+            <button class="btn ghost" id="btnMostrarTabela">Mostrar/Ocultar</button>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table id="tabelaMatriculas">
+            <thead>
+              <tr>
+                <th>Nº Matrícula</th>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Idade</th>
+                <th>Sexo</th>
+                <th>Raça</th>
+                <th>Religião</th>
+                <th>Escola</th>
+                <th>Rede</th>
+                <th>Tipo</th>
+                <th>Oficinas</th>
+                <th>Programas</th>
+                <th>Responsável</th>
+                <th>Telefone</th>
+                <th>Email</th>
+                <th>Família</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- JS -->
+  <script type="module" src="js/index.js"></script>
+</body>
+</html> 
