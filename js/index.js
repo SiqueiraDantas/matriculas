@@ -1,4 +1,4 @@
-// MIS Educa — Início: Auth guard, KPI, tabela com busca + filtro de oficina, edição inline e EXCLUSÃO
+// MIS Educa — Início: Auth guard, KPI, tabela com busca + filtros (oficina + escola), edição inline e EXCLUSÃO
 
 import { auth, db } from "./firebase-config.js";
 import {
@@ -25,7 +25,9 @@ const secTabela        = document.getElementById("tabelaAlunos");
 const tabelaBody       = document.querySelector("#tabelaMatriculas tbody");
 const btnMostrarTabela = document.getElementById("btnMostrarTabela");
 const filtroInput      = document.getElementById("filtroTabela");
-const filtroOficinaEl  = document.getElementById("filtroOficina"); // ✅ NOVO
+
+const filtroOficinaEl  = document.getElementById("filtroOficina");
+const filtroEscolaEl   = document.getElementById("filtroEscola"); // ✅ NOVO
 
 const menuToggle       = document.getElementById("menuToggle");
 const sidebar          = document.getElementById("sidebar");
@@ -111,7 +113,7 @@ function renderizarTabelaMatriculas(lista) {
     : `<tr><td colspan="17">Nenhuma matrícula encontrada.</td></tr>`;
 }
 
-/* -------------------- POPULAR SELECT DE OFICINAS -------------------- */
+/* -------------------- NORMALIZADORES -------------------- */
 function normalizarOficinasDoRegistro(d) {
   if (!d) return [];
   if (Array.isArray(d.oficinas)) return d.oficinas.map(s => String(s || "").trim()).filter(Boolean);
@@ -120,6 +122,12 @@ function normalizarOficinasDoRegistro(d) {
   return [];
 }
 
+function normalizarEscolaDoRegistro(d) {
+  if (!d) return "";
+  return String(d.escola || "").trim();
+}
+
+/* -------------------- POPULAR SELECTS (OFICINAS + ESCOLAS) -------------------- */
 function popularFiltroOficinas() {
   if (!filtroOficinaEl) return;
 
@@ -143,7 +151,6 @@ function popularFiltroOficinas() {
       filtroOficinaEl.appendChild(opt);
     });
 
-  // tenta manter seleção se ainda existir
   if ([...filtroOficinaEl.options].some(o => o.value === valorAtual)) {
     filtroOficinaEl.value = valorAtual;
   } else {
@@ -151,10 +158,40 @@ function popularFiltroOficinas() {
   }
 }
 
-/* -------------------- APLICAR FILTROS (NOME + OFICINA) -------------------- */
+function popularFiltroEscolas() {
+  if (!filtroEscolaEl) return;
+
+  const setEscolas = new Set();
+  cacheMatriculas.forEach(({ data }) => {
+    const escola = normalizarEscolaDoRegistro(data);
+    if (escola) setEscolas.add(escola);
+  });
+
+  const valorAtual = filtroEscolaEl.value || "todas";
+
+  filtroEscolaEl.innerHTML = `<option value="todas">Todas as Escolas</option>`;
+
+  Array.from(setEscolas)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"))
+    .forEach((escola) => {
+      const opt = document.createElement("option");
+      opt.value = escola;
+      opt.textContent = escola;
+      filtroEscolaEl.appendChild(opt);
+    });
+
+  if ([...filtroEscolaEl.options].some(o => o.value === valorAtual)) {
+    filtroEscolaEl.value = valorAtual;
+  } else {
+    filtroEscolaEl.value = "todas";
+  }
+}
+
+/* -------------------- APLICAR FILTROS (NOME + OFICINA + ESCOLA) -------------------- */
 function aplicarFiltros() {
   const qNome = (filtroInput?.value || "").toLowerCase().trim();
   const oficinaSel = filtroOficinaEl?.value || "todas";
+  const escolaSel  = filtroEscolaEl?.value || "todas";
 
   const filtrados = cacheMatriculas.filter(({ data }) => {
     const nome = (data?.nome || "").toLowerCase();
@@ -163,7 +200,10 @@ function aplicarFiltros() {
     const oficinas = normalizarOficinasDoRegistro(data);
     const passouOficina = (oficinaSel === "todas") || oficinas.includes(oficinaSel);
 
-    return passouNome && passouOficina;
+    const escola = normalizarEscolaDoRegistro(data);
+    const passouEscola = (escolaSel === "todas") || escola === escolaSel;
+
+    return passouNome && passouOficina && passouEscola;
   });
 
   renderizarTabelaMatriculas(filtrados);
@@ -188,14 +228,14 @@ async function carregarTabelaMatriculas() {
       snap = await getDocs(q2);
     }
 
-    // monta cache
     cacheMatriculas = [];
     snap.forEach((docu) => {
       cacheMatriculas.push({ id: docu.id, data: docu.data() });
     });
 
-    // popula o select e aplica filtros atuais
+    // popula os selects e aplica filtros
     popularFiltroOficinas();
+    popularFiltroEscolas();
     aplicarFiltros();
   } catch (erro) {
     console.error("Erro ao buscar matrículas:", erro);
@@ -327,7 +367,7 @@ tabelaBody?.addEventListener("click", async (ev) => {
       const cancel = tr.querySelector('button[data-action="cancel"]');
       cancel?.remove();
 
-      // ✅ Atualiza o cache para manter filtros corretos
+      // ✅ atualiza cache (mantém filtros corretos)
       const idx = cacheMatriculas.findIndex(x => x.id === id);
       if (idx !== -1) {
         const antigo = cacheMatriculas[idx].data || {};
@@ -351,8 +391,8 @@ tabelaBody?.addEventListener("click", async (ev) => {
         };
       }
 
-      // se mudou oficina, atualiza lista do select
       popularFiltroOficinas();
+      popularFiltroEscolas();
       aplicarFiltros();
     } catch (e) {
       console.error("Falha ao salvar:", e);
@@ -377,10 +417,10 @@ tabelaBody?.addEventListener("click", async (ev) => {
 
       await deleteDoc(matRef);
 
-      // ✅ remove do cache + aplica filtros (sem reload)
       cacheMatriculas = cacheMatriculas.filter(x => x.id !== id);
 
       popularFiltroOficinas();
+      popularFiltroEscolas();
       aplicarFiltros();
 
       await atualizarKpiTotal();
@@ -440,11 +480,10 @@ function wireUI() {
     });
   }
 
-  // ✅ Agora o filtro por nome filtra pelo cache (junto com oficina)
+  // ✅ filtros
   filtroInput?.addEventListener("input", aplicarFiltros);
-
-  // ✅ Filtro por oficina
   filtroOficinaEl?.addEventListener("change", aplicarFiltros);
+  filtroEscolaEl?.addEventListener("change", aplicarFiltros);
 }
 
 /* -------------------- HELPERS -------------------- */
