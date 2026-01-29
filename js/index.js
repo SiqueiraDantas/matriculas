@@ -1,4 +1,4 @@
-// MIS Educa — Início: Auth guard, KPI, tabela com busca, edição inline e EXCLUSÃO
+// MIS Educa — Início: Auth guard, KPI, tabela com busca + filtro de oficina, edição inline e EXCLUSÃO
 
 import { auth, db } from "./firebase-config.js";
 import {
@@ -25,6 +25,7 @@ const secTabela        = document.getElementById("tabelaAlunos");
 const tabelaBody       = document.querySelector("#tabelaMatriculas tbody");
 const btnMostrarTabela = document.getElementById("btnMostrarTabela");
 const filtroInput      = document.getElementById("filtroTabela");
+const filtroOficinaEl  = document.getElementById("filtroOficina"); // ✅ NOVO
 
 const menuToggle       = document.getElementById("menuToggle");
 const sidebar          = document.getElementById("sidebar");
@@ -38,6 +39,9 @@ function safeReplace(url) {
   guardHandled = true;
   window.location.replace(url);
 }
+
+/* -------------------- CACHE EM MEMÓRIA (para filtros) -------------------- */
+let cacheMatriculas = []; // [{ id, data }]
 
 onAuthStateChanged(auth, async (user) => {
   const path = window.location.pathname.toLowerCase();
@@ -70,6 +74,101 @@ async function atualizarKpiTotal() {
   }
 }
 
+/* -------------------- TABELA: RENDER (a partir da lista filtrada) -------------------- */
+function renderizarTabelaMatriculas(lista) {
+  if (!tabelaBody) return;
+
+  const linhas = (lista || []).map(({ id, data }) => {
+    const d = data || {};
+    return `
+      <tr data-id="${id}">
+        <td>${safe(d.numeroMatricula)}</td>
+        <td>${safe(d.nome)}</td>
+        <td>${safe(d.cpf)}</td>
+        <td>${safe(d.idade)}</td>
+        <td>${safe(d.sexo)}</td>
+        <td>${safe(d.raca)}</td>
+        <td>${safe(d.religiao)}</td>
+        <td>${safe(d.escola)}</td>
+        <td>${safe(d.rede)}</td>
+        <td>${d.tipoMatricula === "A" ? "Matrícula" : (d.tipoMatricula === "B" ? "Rematrícula" : "-")}</td>
+        <td>${Array.isArray(d.oficinas) ? d.oficinas.join(", ") : "-"}</td>
+        <td>${Array.isArray(d.programas) ? d.programas.join(", ") : "-"}</td>
+        <td>${safe(d && d.responsavel ? d.responsavel.nome : null)}</td>
+        <td>${safe(d && d.responsavel ? d.responsavel.telefone : null)}</td>
+        <td>${safe(d && d.responsavel ? d.responsavel.email : null)}</td>
+        <td>${safe(d && d.responsavel ? d.responsavel.integrantes : null)}</td>
+        <td class="td-actions">
+          <button class="btn xs btn-edit" data-action="edit" data-id="${id}">Editar</button>
+          <button class="btn xs danger btn-delete" data-action="delete" data-id="${id}">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tabelaBody.innerHTML = linhas.length
+    ? linhas.join("")
+    : `<tr><td colspan="17">Nenhuma matrícula encontrada.</td></tr>`;
+}
+
+/* -------------------- POPULAR SELECT DE OFICINAS -------------------- */
+function normalizarOficinasDoRegistro(d) {
+  if (!d) return [];
+  if (Array.isArray(d.oficinas)) return d.oficinas.map(s => String(s || "").trim()).filter(Boolean);
+  if (typeof d.oficinas === "string") return d.oficinas.split(",").map(s => s.trim()).filter(Boolean);
+  if (typeof d.oficina === "string") return [d.oficina.trim()].filter(Boolean);
+  return [];
+}
+
+function popularFiltroOficinas() {
+  if (!filtroOficinaEl) return;
+
+  const setOficinas = new Set();
+  cacheMatriculas.forEach(({ data }) => {
+    normalizarOficinasDoRegistro(data).forEach(o => {
+      if (o) setOficinas.add(o);
+    });
+  });
+
+  const valorAtual = filtroOficinaEl.value || "todas";
+
+  filtroOficinaEl.innerHTML = `<option value="todas">Todas as Oficinas</option>`;
+
+  Array.from(setOficinas)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"))
+    .forEach((oficina) => {
+      const opt = document.createElement("option");
+      opt.value = oficina;
+      opt.textContent = oficina;
+      filtroOficinaEl.appendChild(opt);
+    });
+
+  // tenta manter seleção se ainda existir
+  if ([...filtroOficinaEl.options].some(o => o.value === valorAtual)) {
+    filtroOficinaEl.value = valorAtual;
+  } else {
+    filtroOficinaEl.value = "todas";
+  }
+}
+
+/* -------------------- APLICAR FILTROS (NOME + OFICINA) -------------------- */
+function aplicarFiltros() {
+  const qNome = (filtroInput?.value || "").toLowerCase().trim();
+  const oficinaSel = filtroOficinaEl?.value || "todas";
+
+  const filtrados = cacheMatriculas.filter(({ data }) => {
+    const nome = (data?.nome || "").toLowerCase();
+    const passouNome = !qNome || nome.includes(qNome);
+
+    const oficinas = normalizarOficinasDoRegistro(data);
+    const passouOficina = (oficinaSel === "todas") || oficinas.includes(oficinaSel);
+
+    return passouNome && passouOficina;
+  });
+
+  renderizarTabelaMatriculas(filtrados);
+}
+
 /* -------------------- TABELA: CARREGAR MATRÍCULAS -------------------- */
 async function carregarTabelaMatriculas() {
   if (!tabelaBody) return;
@@ -78,6 +177,7 @@ async function carregarTabelaMatriculas() {
 
   try {
     let snap;
+
     // Ordena por dataEnvio; fallback: createdAt
     try {
       const q1 = query(collection(db, "matriculas"), orderBy("dataEnvio", "desc"));
@@ -88,38 +188,15 @@ async function carregarTabelaMatriculas() {
       snap = await getDocs(q2);
     }
 
-    const linhas = [];
+    // monta cache
+    cacheMatriculas = [];
     snap.forEach((docu) => {
-      const d = docu.data();
-      linhas.push(`
-        <tr data-id="${docu.id}">
-          <td>${safe(d.numeroMatricula)}</td>
-          <td>${safe(d.nome)}</td>
-          <td>${safe(d.cpf)}</td>
-          <td>${safe(d.idade)}</td>
-          <td>${safe(d.sexo)}</td>
-          <td>${safe(d.raca)}</td>
-          <td>${safe(d.religiao)}</td>
-          <td>${safe(d.escola)}</td>
-          <td>${safe(d.rede)}</td>
-          <td>${d.tipoMatricula === "A" ? "Matrícula" : (d.tipoMatricula === "B" ? "Rematrícula" : "-")}</td>
-          <td>${Array.isArray(d.oficinas) ? d.oficinas.join(", ") : "-"}</td>
-          <td>${Array.isArray(d.programas) ? d.programas.join(", ") : "-"}</td>
-          <td>${safe(d && d.responsavel ? d.responsavel.nome : null)}</td>
-          <td>${safe(d && d.responsavel ? d.responsavel.telefone : null)}</td>
-          <td>${safe(d && d.responsavel ? d.responsavel.email : null)}</td>
-          <td>${safe(d && d.responsavel ? d.responsavel.integrantes : null)}</td>
-          <td class="td-actions">
-            <button class="btn xs btn-edit" data-action="edit" data-id="${docu.id}">Editar</button>
-            <button class="btn xs danger btn-delete" data-action="delete" data-id="${docu.id}">Excluir</button>
-          </td>
-        </tr>
-      `);
+      cacheMatriculas.push({ id: docu.id, data: docu.data() });
     });
 
-    tabelaBody.innerHTML = linhas.length
-      ? linhas.join("")
-      : `<tr><td colspan="17">Nenhuma matrícula encontrada.</td></tr>`;
+    // popula o select e aplica filtros atuais
+    popularFiltroOficinas();
+    aplicarFiltros();
   } catch (erro) {
     console.error("Erro ao buscar matrículas:", erro);
     tabelaBody.innerHTML = `<tr><td colspan="17">❌ Erro ao carregar dados.</td></tr>`;
@@ -249,6 +326,34 @@ tabelaBody?.addEventListener("click", async (ev) => {
       btn.setAttribute("data-action", "edit");
       const cancel = tr.querySelector('button[data-action="cancel"]');
       cancel?.remove();
+
+      // ✅ Atualiza o cache para manter filtros corretos
+      const idx = cacheMatriculas.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        const antigo = cacheMatriculas[idx].data || {};
+        cacheMatriculas[idx].data = {
+          ...antigo,
+          nome: payload.nome ?? antigo.nome,
+          cpf: payload.cpf ?? antigo.cpf,
+          idade: payload.idade ?? antigo.idade,
+          sexo: payload.sexo ?? antigo.sexo,
+          raca: payload.raca ?? antigo.raca,
+          religiao: payload.religiao ?? antigo.religiao,
+          escola: payload.escola ?? antigo.escola,
+          rede: payload.rede ?? antigo.rede,
+          tipoMatricula: payload.tipoMatricula ?? antigo.tipoMatricula,
+          oficinas: payload.oficinas ?? antigo.oficinas,
+          programas: payload.programas ?? antigo.programas,
+          responsavel: {
+            ...(antigo.responsavel || {}),
+            ...(payload.responsavel || {}),
+          },
+        };
+      }
+
+      // se mudou oficina, atualiza lista do select
+      popularFiltroOficinas();
+      aplicarFiltros();
     } catch (e) {
       console.error("Falha ao salvar:", e);
       alert("❌ Não foi possível salvar as alterações.");
@@ -272,7 +377,12 @@ tabelaBody?.addEventListener("click", async (ev) => {
 
       await deleteDoc(matRef);
 
-      tr.remove();
+      // ✅ remove do cache + aplica filtros (sem reload)
+      cacheMatriculas = cacheMatriculas.filter(x => x.id !== id);
+
+      popularFiltroOficinas();
+      aplicarFiltros();
+
       await atualizarKpiTotal();
       alert("Matrícula excluída com sucesso.");
     } catch (e) {
@@ -330,14 +440,11 @@ function wireUI() {
     });
   }
 
-  filtroInput?.addEventListener("input", () => {
-    const q = filtroInput.value.toLowerCase();
-    const rows = document.querySelectorAll("#tabelaMatriculas tbody tr");
-    rows.forEach((tr) => {
-      const nome = (tr.querySelector("td:nth-child(2)")?.textContent || "").toLowerCase();
-      tr.style.display = nome.includes(q) ? "" : "none";
-    });
-  });
+  // ✅ Agora o filtro por nome filtra pelo cache (junto com oficina)
+  filtroInput?.addEventListener("input", aplicarFiltros);
+
+  // ✅ Filtro por oficina
+  filtroOficinaEl?.addEventListener("change", aplicarFiltros);
 }
 
 /* -------------------- HELPERS -------------------- */
